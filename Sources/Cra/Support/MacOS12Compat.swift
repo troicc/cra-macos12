@@ -227,8 +227,34 @@ func compatRenderSwiftUIImage<V: View>(_ view: V, scale: CGFloat = 2) -> NSImage
     let size = host.fittingSize
     guard size.width > 0, size.height > 0 else { return nil }
     host.frame = CGRect(origin: .zero, size: size)
+    // Attach to an offscreen window so SwiftUI's displayScale and CALayer contentsScale pick up
+    // the Retina backing scale instead of rasterizing SF Symbols and shapes at 1x.
+    let win = NSWindow(
+        contentRect: CGRect(origin: .zero, size: size),
+        styleMask: .borderless,
+        backing: .buffered,
+        defer: false
+    )
+    win.isReleasedWhenClosed = false
+    win.isOpaque = false
+    win.backgroundColor = .clear
+    win.contentView = host
     host.layoutSubtreeIfNeeded()
-    guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { return nil }
+    let pxW = max(1, Int((size.width * scale).rounded()))
+    let pxH = max(1, Int((size.height * scale).rounded()))
+    guard let rep = NSBitmapImageRep(
+        bitmapDataPlanes: nil,
+        pixelsWide: pxW,
+        pixelsHigh: pxH,
+        bitsPerSample: 8,
+        samplesPerPixel: 4,
+        hasAlpha: true,
+        isPlanar: false,
+        colorSpaceName: .deviceRGB,
+        bytesPerRow: 0,
+        bitsPerPixel: 0
+    ) else { return nil }
+    rep.size = size
     host.cacheDisplay(in: host.bounds, to: rep)
     let img = NSImage(size: size)
     img.addRepresentation(rep)
