@@ -583,7 +583,7 @@ final class CommandBarRowView: NSView {
         let h = bounds.height
         // 10 pt padding, a 24 pt favicon tile, 8 pt to the title, and a 24 pt arrow tile.
         iconBox.frame = NSRect(x: 10, y: (h - 24) / 2, width: 24, height: 24)
-        icon.frame = iconBox.frame.insetBy(dx: 4, dy: 4)
+        icon.frame = iconBox.frame.safeInsetBy(dx: 4, dy: 4)
         let es = emoji.intrinsicContentSize
         emoji.frame = NSRect(x: 10 + (24 - es.width) / 2, y: (h - es.height) / 2, width: es.width, height: es.height)
         var right = bounds.width - 12

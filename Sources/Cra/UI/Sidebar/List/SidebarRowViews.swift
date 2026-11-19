@@ -2077,7 +2077,7 @@ final class SplitCellView: NSView, ArcTooltipTarget {
         let h = bounds.height
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        pill.frame = bounds.insetBy(dx: 0, dy: SplitRowMetrics.pillInset)
+        pill.frame = bounds.safeInsetBy(dx: 0, dy: SplitRowMetrics.pillInset)
         CATransaction.commit()
         let fx = SplitRowMetrics.favicon
         favicon.frame = NSRect(x: fx, y: (h - CraMetrics.favicon) / 2, width: CraMetrics.favicon, height: CraMetrics.favicon)

@@ -1106,7 +1106,7 @@ final class CaptureMenuRow: NSView {
 
     override func layout() {
         super.layout()
-        fill.frame = bounds.insetBy(dx: 5, dy: 2)
+        fill.frame = bounds.safeInsetBy(dx: 5, dy: 2)
         icon.frame = NSRect(x: 25 - 10, y: (bounds.height - 20) / 2, width: 20, height: 20)
         label.sizeToFit()
         // A long easel name ends in an ellipsis inside the menu.

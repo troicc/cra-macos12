@@ -117,7 +117,7 @@ final class TabSwitcherView: NSView {
         panel.frame = p
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        innerLine.frame = panel.bounds.insetBy(dx: 1, dy: 1)
+        innerLine.frame = panel.bounds.safeInsetBy(dx: 1, dy: 1)
         CATransaction.commit()
         for (i, c) in cards.enumerated() {
             c.frame = NSRect(x: M.paddingH + CGFloat(i) * (M.card.width + M.cardSpacing), y: M.paddingV,

@@ -180,6 +180,20 @@ struct CompatURLDropModifier: ViewModifier {
     }
 }
 
+extension CGRect {
+    /// Like `insetBy(dx:dy:)` but clamps size to >= 0 instead of returning `CGRect.null` (+inf),
+    /// which triggers an `NSView setFrameOrigin:` `isfinite(newOrigin.x)` assertion on macOS 12.
+    func safeInsetBy(dx: CGFloat, dy: CGFloat) -> CGRect {
+        let w = width - 2 * dx
+        let h = height - 2 * dy
+        if w <= 0 || h <= 0 {
+            return CGRect(x: origin.x + min(dx, width / 2), y: origin.y + min(dy, height / 2),
+                          width: max(0, w), height: max(0, h))
+        }
+        return insetBy(dx: dx, dy: dy)
+    }
+}
+
 extension NSView {
     /// macOS 12-compatible wrapper around macOS 14+ `NSView.clipsToBounds`.
     var compatClipsToBounds: Bool {

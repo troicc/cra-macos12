@@ -288,7 +288,7 @@ final class PaneCardView: NSView {
         // page's curve, so the page's edge pixels only ever blend with the gradient behind the card.
         let rounded = cornerRadius > 0
         let inset: CGFloat = rounded ? 1 : 0
-        var fill = webArea.frame.insetBy(dx: inset, dy: 0)
+        var fill = webArea.frame.safeInsetBy(dx: inset, dy: 0)
         fill.origin.y += inset
         fill.size.height = max(0, fill.height - (th == 0 ? 2 * inset : inset))
         pageBackground.frame = fill

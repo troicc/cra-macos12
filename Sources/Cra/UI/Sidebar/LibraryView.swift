@@ -1044,7 +1044,7 @@ private final class LibraryItemCell: NSView, NSDraggingSource {
 
     override func layout() {
         super.layout()
-        card.frame = bounds.insetBy(dx: 4, dy: 2)
+        card.frame = bounds.safeInsetBy(dx: 4, dy: 2)
         let h = card.bounds.height
         // Archived: 24 pt tile 9 pt in; download: 32 pt thumbnail 5 pt in; the text 10 pt after.
         let isDownload = isDownloadRow

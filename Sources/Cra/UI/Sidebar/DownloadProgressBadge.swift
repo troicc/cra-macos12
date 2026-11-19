@@ -35,7 +35,7 @@ final class DownloadProgressBadgeView: NSView {
         }
         ring.strokeEnd = 0
         for l in [arrow, check] {
-            l.frame = bounds.insetBy(dx: 4.5, dy: 4.5)
+            l.frame = bounds.safeInsetBy(dx: 4.5, dy: 4.5)
             l.contentsGravity = .resizeAspect
         }
         check.opacity = 0
