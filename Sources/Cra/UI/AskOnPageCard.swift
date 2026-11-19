@@ -92,7 +92,7 @@ final class AskOnPageController {
 
     func ask(_ raw: String) {
         guard state.enabled, state.canAsk else { return }
-        let code = Locale.preferredLanguages.first.flatMap { Locale(identifier: $0).language.languageCode?.identifier } ?? "en"
+        let code = Locale.preferredLanguages.first.flatMap { Locale(identifier: $0).languageCode } ?? "en"
         let language = Locale(identifier: "en_US").localizedString(forLanguageCode: code) ?? "English"
         guard service.ask(raw.trimmingCharacters(in: .whitespacesAndNewlines), language: language) else { return }
         overlay.findQuery = ""

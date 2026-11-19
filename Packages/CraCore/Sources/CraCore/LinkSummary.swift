@@ -23,10 +23,10 @@ public enum LinkSummaryPolicy {
 
     /// How long the pointer rests on a link before its card opens: 0.97 and 1.2 s in two
     /// recordings of Arc on Hacker News (60 fps).
-    public static let rest: Duration = .seconds(1)
+    public static let rest: TimeInterval = 1.0
 
     public static func autoSite(page: URL?) -> Site? {
-        guard let page, let host = page.host()?.lowercased() else { return nil }
+        guard let page, let host = page.host?.lowercased() else { return nil }
         let h = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
         if h == "news.ycombinator.com" { return .hackerNews }
         if ["x.com", "twitter.com", "mobile.x.com", "mobile.twitter.com"].contains(h) { return .x }
@@ -101,13 +101,13 @@ public enum LinkSummaryPolicy {
     /// fetched: a hover mustn't reach a router or a dev server.
     public static func canPreview(link: URL?, page: URL? = nil) -> Bool {
         guard let link, let scheme = link.scheme?.lowercased(), scheme == "http" || scheme == "https",
-              let host = link.host()?.lowercased(), isPublicHost(host) else { return false }
+              let host = link.host?.lowercased(), isPublicHost(host) else { return false }
         if let page, sameDocument(link, page) { return false }
         return true
     }
 
     static func sameDocument(_ a: URL, _ b: URL) -> Bool {
-        a.host()?.lowercased() == b.host()?.lowercased() && a.port == b.port && a.path() == b.path() && a.query() == b.query()
+        a.host?.lowercased() == b.host?.lowercased() && a.port == b.port && a.path == b.path && a.query == b.query
     }
 
     /// False for loopback, private, link-local and shared address ranges, IPv6 literals, single-label
@@ -147,7 +147,7 @@ public enum LinkSummaryPolicy {
 
     /// The search on a Google results page, which Arc hands the model as the question to focus on.
     public static func searchQuery(page: URL?) -> String? {
-        guard autoSite(page: page) == .google, let page, page.path().hasPrefix("/search"),
+        guard autoSite(page: page) == .google, let page, page.path.hasPrefix("/search"),
               let raw = URLComponents(url: page, resolvingAgainstBaseURL: false)?.percentEncodedQueryItems?.first(where: { $0.name == "q" })?.value,
               // A form's + is a space; URLComponents leaves it.
               let q = raw.replacingOccurrences(of: "+", with: " ").removingPercentEncoding,
@@ -167,7 +167,7 @@ public enum LinkSummaryFetchPolicy {
         guard let parsed = URL(string: raw, relativeTo: base)?.absoluteURL,
               var parts = URLComponents(url: parsed, resolvingAgainstBaseURL: false),
               parts.user == nil, parts.password == nil,
-              LinkSummaryPolicy.canPreview(link: parsed), let host = parsed.host()?.lowercased() else { return nil }
+              LinkSummaryPolicy.canPreview(link: parsed), let host = parsed.host?.lowercased() else { return nil }
         // Chromium accepts legacy hexadecimal and octal IPv4 forms. Reject ambiguous literals
         // before CEF canonicalizes them to a private address after the initial host check.
         let labels = host.trimmingCharacters(in: CharacterSet(charactersIn: ".")).split(separator: ".")
@@ -395,7 +395,7 @@ public enum LinkSummaryPrompt {
 
     /// Capture once in the request; only generated values are localized, never schema keys.
     public static func responseLanguage(preferredLanguages: [String]) -> String {
-        let code = preferredLanguages.first.flatMap { Locale(identifier: $0).language.languageCode?.identifier } ?? "en"
+        let code = preferredLanguages.first.flatMap { Locale(identifier: $0).languageCode } ?? "en"
         return Locale(identifier: "en_US").localizedString(forLanguageCode: code) ?? "English"
     }
 
@@ -448,7 +448,7 @@ public enum LinkSummaryPrompt {
 
     /// The host as the card shows it, without www.
     public static func displayHost(_ url: URL) -> String {
-        guard let h = url.host()?.lowercased() else { return "" }
+        guard let h = url.host?.lowercased() else { return "" }
         return h.hasPrefix("www.") ? String(h.dropFirst(4)) : h
     }
 

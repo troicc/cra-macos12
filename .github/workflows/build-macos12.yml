@@ -43,8 +43,24 @@ jobs:
           path: vendor/cef
           key: cef-150.0.21-macosarm64-12.6
 
+      - name: Restore SwiftPM build cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .build
+          key: swiftpm-macos12-${{ hashFiles('Package.swift', 'Packages/CraCore/Package.swift') }}-${{ github.run_id }}
+          restore-keys: |
+            swiftpm-macos12-${{ hashFiles('Package.swift', 'Packages/CraCore/Package.swift') }}-
+            swiftpm-macos12-
+
       - name: Build Cra.app
         run: scripts/build.sh release
+
+      - name: Save SwiftPM build cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .build
+          key: swiftpm-macos12-${{ hashFiles('Package.swift', 'Packages/CraCore/Package.swift') }}-${{ github.run_id }}
 
       - name: Package Cra.app
         run: |

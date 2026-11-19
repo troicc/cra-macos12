@@ -144,7 +144,7 @@ final class TidyDownloadsService {
               store.prefs.windows.contains(where: { $0.id == window }), !path.isEmpty else { return nil }
         let original = (path as NSString).lastPathComponent
         let language = Locale.preferredLanguages.first.flatMap {
-            Locale(identifier: "en").localizedString(forLanguageCode: Locale(identifier: $0).language.languageCode?.identifier ?? "en")
+            Locale(identifier: "en").localizedString(forLanguageCode: Locale(identifier: $0).languageCode ?? "en")
         } ?? "English"
         let input = TidyDownloads.Request(file: original, source: source, downloadURL: downloadURL, language: language)
         let generate = self.generate

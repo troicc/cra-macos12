@@ -164,7 +164,7 @@ final class TidyTabsService {
               runs[key] == nil, !store.tidyingSpaces.contains(sid), let space = store.space(sid) else { return nil }
         let loose = store.tidyCandidates(sid).prefix(TidyTabs.maximumTabs)
         let tabs = loose.map { item in
-            TidyTabs.Tab(id: item.id, title: item.displayTitle, host: item.tab.flatMap { URL(string: $0.url)?.host() } ?? "")
+            TidyTabs.Tab(id: item.id, title: item.displayTitle, host: item.tab.flatMap { URL(string: $0.url)?.host } ?? "")
         }
         let groups = store.tabGroups(in: sid).map { TidyTabs.ExistingGroup(id: $0.id, name: $0.title ?? "") }
         guard let request = TidyTabs.request(tabs: tabs, existingGroups: groups,

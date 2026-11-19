@@ -45,7 +45,7 @@ public struct KeepActiveSite: Codable, Equatable, Hashable, Identifiable, Sendab
             subdomains = false
         }
         guard !s.isEmpty, !s.contains(where: { $0.isWhitespace || $0 == "*" }) else { return nil }
-        guard let host = URL(string: s.contains("://") ? s : "https://" + s)?.host(percentEncoded: false)?.lowercased() else { return nil }
+        guard let host = URL(string: s.contains("://") ? s : "https://" + s)?.host?.lowercased() else { return nil }
         var h = host
         while h.hasSuffix(".") { h.removeLast() }
         guard !h.isEmpty, !h.hasPrefix(".") else { return nil }
@@ -72,7 +72,7 @@ public struct KeepActiveSite: Codable, Equatable, Hashable, Identifiable, Sendab
 
     /// Whether a page at `url` is this entry's. Pages with no host (files, blank pages) never are.
     public func matches(url: String) -> Bool {
-        guard let h = URL(string: url)?.host(percentEncoded: false), !h.isEmpty else { return false }
+        guard let h = URL(string: url)?.host, !h.isEmpty else { return false }
         return matches(host: h)
     }
 

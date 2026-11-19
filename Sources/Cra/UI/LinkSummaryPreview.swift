@@ -64,8 +64,7 @@ final class LinkSummaryPreviewController {
         hover = new
         guard LinkSummaryPolicy.mayOpen(page: new.context.page, shiftHeld: new.shiftHeld) else { return }
         let token = generation
-        let rest = LinkSummaryPolicy.rest.components
-        resting = clock.after(Double(rest.seconds) + Double(rest.attoseconds) / 1e18) { [weak self] in
+        resting = clock.after(LinkSummaryPolicy.rest) { [weak self] in
             guard let self, self.generation == token, self.hover?.context == new.context, new.isCurrent() else { return }
             self.resting = nil
             new.inspect { [weak self] found in

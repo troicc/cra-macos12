@@ -22,13 +22,14 @@ public enum MCPInputPlan {
         let length = max(1, distance)
         let control = CGPoint(x: (start.x + end.x) / 2 - (end.y - start.y) / length * bend,
                               y: (start.y + end.y) / 2 + (end.x - start.x) / length * bend)
-        return (1...steps).map { index in
+        let stepDelay = duration / Double(steps)
+        return (1...steps).map { index -> Move in
             let fraction = Double(index) / Double(steps)
-            let t = fraction * fraction * (3 - 2 * fraction)
-            let u = 1 - t
-            return Move(point: CGPoint(x: u * u * start.x + 2 * u * t * control.x + t * t * end.x,
-                                       y: u * u * start.y + 2 * u * t * control.y + t * t * end.y),
-                        delay: duration / Double(steps))
+            let t = fraction * fraction * (3.0 - 2.0 * fraction)
+            let u = 1.0 - t
+            let px: Double = u * u * Double(start.x) + 2.0 * u * t * Double(control.x) + t * t * Double(end.x)
+            let py: Double = u * u * Double(start.y) + 2.0 * u * t * Double(control.y) + t * t * Double(end.y)
+            return Move(point: CGPoint(x: px, y: py), delay: stepDelay)
         }
     }
 
