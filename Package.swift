@@ -31,27 +31,26 @@ let engineFrameworks = Context.environment["CRA_ENGINE_FRAMEWORKS"] ?? "\(Contex
 // scripts/build.sh copies Sparkle.framework into Cra.app/Contents/Frameworks.
 let sparkleRoot = "\(Context.packageDirectory)/vendor/sparkle"
 
-let package = Package(
-    name: "Cra",
-    platforms: [.macOS(.v12)],
-    products: [
-        .executable(name: "Cra", targets: ["Cra"]),
-    ] + (chromiumEngine ? [] : [.executable(name: "CraHelper", targets: ["CraHelper"])]) + [
-        .executable(name: "CraPluginHost", targets: ["CraPluginHost"]),
-        // Loaded by the Dock, not by Cra; scripts/build.sh wraps it in
-        // Cra.app/Contents/PlugIns/CraDockTile.docktileplugin.
-        .library(name: "CraDockTile", type: .dynamic, targets: ["CraDockTile"]),
-    ],
-    // Models and decisions that need no AppKit or CEF, with tests that run without vendor/cef.
-    dependencies: [
-        .package(path: "Packages/CraCore"),
-        .package(url: "https://github.com/pointfreeco/swift-perception", from: "1.3.5"),
-    ],
-    targets: [
-        .executableTarget(name: "CraPluginHost", path: "Sources/CraPluginHost",
-                          linkerSettings: [.linkedFramework("JavaScriptCore")]),
-    ] + (chromiumEngine ? [
-        // The bridge lives in Chrome's framework (engine/chromium/cra/bridge.mm); this target is its header.
+var packageProducts: [Product] = [
+    .executable(name: "Cra", targets: ["Cra"]),
+]
+if !chromiumEngine {
+    packageProducts.append(.executable(name: "CraHelper", targets: ["CraHelper"]))
+}
+packageProducts.append(contentsOf: [
+    .executable(name: "CraPluginHost", targets: ["CraPluginHost"]),
+    // Loaded by the Dock, not by Cra; scripts/build.sh wraps it in
+    // Cra.app/Contents/PlugIns/CraDockTile.docktileplugin.
+    .library(name: "CraDockTile", type: .dynamic, targets: ["CraDockTile"]),
+])
+
+var packageTargets: [Target] = [
+    .executableTarget(name: "CraPluginHost", path: "Sources/CraPluginHost",
+                      linkerSettings: [.linkedFramework("JavaScriptCore")]),
+]
+if chromiumEngine {
+    // The bridge lives in Chrome's framework (engine/chromium/cra/bridge.mm); this target is its header.
+    packageTargets.append(
         .target(
             name: "CraCEF",
             path: "Sources/CraCEF",
@@ -62,9 +61,11 @@ let package = Package(
                 .unsafeFlags(["-F", engineFrameworks, "-Xlinker", "-needed_framework", "-Xlinker", "Cra Framework"]),
                 .linkedFramework("AppKit"),
             ]
-        ),
-    ] : [
-        // Objective-C++ bridge between Swift and CEF.
+        )
+    )
+} else {
+    // Objective-C++ bridge between Swift and CEF.
+    packageTargets.append(contentsOf: [
         .target(
             name: "CraCEF",
             path: "Sources/CraCEF",
@@ -96,27 +97,40 @@ let package = Package(
                 .linkedFramework("IOSurface"),
             ]
         ),
-    ]) + [
-        // Dock tile plug-in: keeps the icon picked in Settings after Cra quits.
-        .target(
-            name: "CraDockTile",
-            path: "Sources/CraDockTile",
-            linkerSettings: [.linkedFramework("AppKit")]
-        ),
-        // The browser itself: AppKit window, SwiftUI sidebar and command bar.
-        .executableTarget(
-            name: "Cra",
-            dependencies: [
-                "CraCEF",
-                .product(name: "CraCore", package: "CraCore"),
-                .product(name: "Perception", package: "swift-perception"),
-            ],
-            path: "Sources/Cra",
-            swiftSettings: [.unsafeFlags(["-F", sparkleRoot]), .unsafeFlags(["-Onone"], .when(configuration: .debug))],
-            linkerSettings: [.unsafeFlags(["-F", sparkleRoot, "-framework", "Sparkle",
-                                           "-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
-        ),
+    ])
+}
+packageTargets.append(contentsOf: [
+    // Dock tile plug-in: keeps the icon picked in Settings after Cra quits.
+    .target(
+        name: "CraDockTile",
+        path: "Sources/CraDockTile",
+        linkerSettings: [.linkedFramework("AppKit")]
+    ),
+    // The browser itself: AppKit window, SwiftUI sidebar and command bar.
+    .executableTarget(
+        name: "Cra",
+        dependencies: [
+            "CraCEF",
+            .product(name: "CraCore", package: "CraCore"),
+            .product(name: "Perception", package: "swift-perception"),
+        ],
+        path: "Sources/Cra",
+        swiftSettings: [.unsafeFlags(["-F", sparkleRoot]), .unsafeFlags(["-Onone"], .when(configuration: .debug))],
+        linkerSettings: [.unsafeFlags(["-F", sparkleRoot, "-framework", "Sparkle",
+                                       "-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
+    ),
+])
+
+let package = Package(
+    name: "Cra",
+    platforms: [.macOS(.v12)],
+    products: packageProducts,
+    // Models and decisions that need no AppKit or CEF, with tests that run without vendor/cef.
+    dependencies: [
+        .package(path: "Packages/CraCore"),
+        .package(url: "https://github.com/pointfreeco/swift-perception", from: "1.3.5"),
     ],
+    targets: packageTargets,
     swiftLanguageVersions: [.v5],
     cxxLanguageStandard: .cxx20
 )
