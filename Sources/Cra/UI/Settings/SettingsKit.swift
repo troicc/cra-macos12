@@ -1,4 +1,5 @@
 import SwiftUI
+import Perception
 
 /// Geometry of Arc 1.172.2's Settings window, measured on 11 and 12 Nov 2026 from its window captures and
 /// accessibility tree (GitHub #372): 684 × 650 pt, a toolbar of tabs from y 32 to 88, a body of 562 pt under it,
@@ -60,7 +61,7 @@ extension Color {
 
 /// Arc's switch: 36 × 16 pt, a round knob 3 pt inside the track.
 struct SettingsSwitchStyle: ToggleStyle {
-    func makeBody(configuration: Configuration) -> some View {
+    func makeBody(configuration: Configuration) -> some View { WithPerceptionTracking {
         let size = SettingsMetrics.switchSize
         Button { configuration.isOn.toggle() } label: {
             Capsule()
@@ -77,7 +78,7 @@ struct SettingsSwitchStyle: ToggleStyle {
         }
         .buttonStyle(.plain)
         .accessibilityRepresentation { Toggle(isOn: configuration.$isOn) { configuration.label } }
-    }
+    } }
 }
 
 extension ToggleStyle where Self == SettingsSwitchStyle {
@@ -97,7 +98,7 @@ private extension View {
 /// Rounded card behind grouped rows.
 struct SettingsCard<Content: View>: View {
     @ViewBuilder let content: Content
-    var body: some View { VStack(spacing: 0) { content }.settingsCardLook() }
+    var body: some View { WithPerceptionTracking { VStack(spacing: 0) { content }.settingsCardLook() } }
 }
 
 /// One card row: label on the left, control on the right, 36 pt tall.
@@ -105,7 +106,7 @@ struct SettingsCardRow<Leading: View, Trailing: View>: View {
     @ViewBuilder let leading: Leading
     @ViewBuilder let trailing: Trailing
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 8) {
             leading
             Spacer(minLength: 8)
@@ -114,58 +115,58 @@ struct SettingsCardRow<Leading: View, Trailing: View>: View {
         .padding(.horizontal, SettingsMetrics.cardRowInset)
         .padding(.vertical, 10)
         .frame(minHeight: SettingsMetrics.cardRowHeight)
-    }
+    } }
 }
 
 /// Hairline between card rows, inset 10 like Arc's.
 struct SettingsCardDivider: View {
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Rectangle().fill(Color.settingsHairline)
             .frame(height: 1)
             .padding(.horizontal, SettingsMetrics.cardRowInset)
-    }
+    } }
 }
 
 /// 11 pt secondary title above a card ("Your Data and Settings" in Arc's Profiles).
 struct SettingsHeader: View {
     let text: String
     init(_ text: String) { self.text = text }
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Text(text).font(.system(size: 11)).foregroundStyle(.secondary)
             .padding(.leading, SettingsMetrics.cardRowInset)
             .padding(.bottom, 6)
-    }
+    } }
 }
 
 /// 11 pt secondary note under a card.
 struct SettingsFootnote: View {
     let text: String
     init(_ text: String) { self.text = text }
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Text(text).font(.system(size: 11)).foregroundStyle(.secondary)
             .padding(.leading, SettingsMetrics.cardRowInset)
             .padding(.top, 6)
             .fixedSize(horizontal: false, vertical: true)
-    }
+    } }
 }
 
 /// The card around rows with a picture (Arc's Max card); the same look as every card.
 struct SettingsFeatureCard<Content: View>: View {
     @ViewBuilder let content: Content
-    var body: some View { VStack(spacing: 0) { content }.settingsCardLook() }
+    var body: some View { WithPerceptionTracking { VStack(spacing: 0) { content }.settingsCardLook() } }
 }
 
 /// Arc frames each Max picture in white: 3 pt round an 88×56 tile with 5 pt corners.
 struct SettingsPictureFrame<Content: View>: View {
     @ViewBuilder let content: Content
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         content
             .frame(width: 88, height: 56)
             .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
             .padding(3)
             .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
             .accessibilityHidden(true)
-    }
+    } }
 }
 
 /// One setting as Arc's Max pane draws a feature: the picture of what it does, its name over a
@@ -195,7 +196,7 @@ struct SettingsFeatureRow<Picture: View, Trailing: View, Below: View>: View {
 
     private var hasPicture: Bool { Picture.self != EmptyView.self }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(alignment: .center, spacing: 14) {
             if hasPicture { SettingsPictureFrame { picture } }
             VStack(alignment: .leading, spacing: hasPicture ? 4 : 2) {
@@ -213,7 +214,7 @@ struct SettingsFeatureRow<Picture: View, Trailing: View, Below: View>: View {
         }
         .padding(.horizontal, SettingsMetrics.cardRowInset)
         .padding(.vertical, hasPicture ? 10 : 9)
-    }
+    } }
 }
 
 /// A setting that doesn't change how Cra looks: no picture, just its name, what it does and the
@@ -232,9 +233,9 @@ struct SettingsPlainRow<Trailing: View, Below: View>: View {
         self.below = below()
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         SettingsFeatureRow(title, detail: detail, picture: { EmptyView() }, trailing: { trailing }, below: { below })
-    }
+    } }
 }
 
 /// A plain row whose control is a switch. Off and greyed while `enabled` is false.
@@ -254,9 +255,9 @@ struct SettingsToggleRow<Below: View>: View {
         self.below = below()
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         SettingsSwitchRow(title, detail: detail, isOn: $isOn, enabled: enabled, picture: { EmptyView() }, below: { below })
-    }
+    } }
 }
 
 /// A picture row whose control is a switch. Off and greyed while `enabled` is false.
@@ -283,14 +284,14 @@ struct SettingsSwitchRow<Picture: View, Below: View>: View {
         self.init(title, detail: Text(detail), isOn: isOn, enabled: enabled, picture: picture, below: below)
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         SettingsFeatureRow(title, detail: detail, picture: { picture }, trailing: {
             Toggle(title, isOn: Binding(get: { isOn && enabled }, set: { isOn = $0 }))
                 .toggleStyle(.arcSwitch).labelsHidden()
                 .disabled(!enabled)
                 .opacity(enabled ? 1 : 0.5)
         }, below: { below })
-    }
+    } }
 }
 
 extension View {
@@ -304,7 +305,7 @@ struct SettingsInlinePicker<Value: Hashable, Options: View>: View {
     @Binding var selection: Value
     var enabled = true
     @ViewBuilder let options: Options
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 6) {
             Text(label).foregroundStyle(enabled ? .primary : .secondary)
             Picker(label, selection: $selection) { options }
@@ -312,7 +313,7 @@ struct SettingsInlinePicker<Value: Hashable, Options: View>: View {
                 .fixedSize()
                 .disabled(!enabled)
         }
-    }
+    } }
 }
 
 private struct SettingsNestedKey: EnvironmentKey { static let defaultValue = false }
@@ -336,7 +337,7 @@ struct SettingsCardPane<Content: View>: View {
     @ViewBuilder let content: Content
     @Environment(\.settingsNested) private var nested
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         if nested {
             VStack(alignment: .leading, spacing: 0) { content }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -350,7 +351,7 @@ struct SettingsCardPane<Content: View>: View {
             }
             .compatScrollIndicators(.automatic)
         }
-    }
+    } }
 }
 
 /// A one-line card row with a switch, as most of Arc's rows are: the name on the left, the switch on the right.
@@ -367,7 +368,7 @@ struct SettingsSwitchLine<Note: View>: View {
         self.note = note()
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         SettingsCardRow {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.system(size: 13))
@@ -378,23 +379,23 @@ struct SettingsSwitchLine<Note: View>: View {
                 .toggleStyle(.arcSwitch).labelsHidden()
                 .disabled(!enabled).opacity(enabled ? 1 : 0.5)
         }
-    }
+    } }
 }
 
 /// Arc's rule between a pane's groups (Links): a hairline across the pane's width.
 struct SettingsRule: View {
-    var body: some View { Rectangle().fill(Color.settingsHairline).frame(height: 1) }
+    var body: some View { WithPerceptionTracking { Rectangle().fill(Color.settingsHairline).frame(height: 1) } }
 }
 
 /// A line of body text over a card (Arc's Links and Max panes explain themselves in 13 pt before the rows).
 struct SettingsBlurb: View {
     let text: String
     init(_ text: String) { self.text = text }
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Text(text).font(.system(size: 13))
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, SettingsMetrics.cardRowInset)
-    }
+    } }
 }
 
 /// The picture bands at the top of Arc's Max and Links panes end in a wavy edge, a scallop every 17 pt.
@@ -444,7 +445,7 @@ struct SettingsTileRow: View {
         self._isOn = isOn
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         SettingsCardRow {
             HStack(spacing: 10) {
                 Image(systemName: symbol).font(.system(size: 10, weight: .semibold)).foregroundStyle(.white)
@@ -455,5 +456,5 @@ struct SettingsTileRow: View {
         } trailing: {
             Toggle(title, isOn: $isOn).toggleStyle(.arcSwitch).labelsHidden()
         }
-    }
+    } }
 }

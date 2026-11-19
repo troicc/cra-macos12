@@ -265,7 +265,7 @@ struct AskOnPageView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var closeHovered = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let spring: Animation? = reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.75, blendDuration: 0.1)
         return VStack(alignment: .leading, spacing: 0) {
             Group {
@@ -293,7 +293,7 @@ struct AskOnPageView: View {
         .transaction { if reduceMotion { $0.disablesAnimations = true } }
         .onChange(of: state.service.phase) { _ in controller?.restoreFailedQuestion() }
         .onExitCommand { controller?.onClose() }
-    }
+    } }
 
     /// The native baseline row includes Find controls; only conversation input gets an inset band.
     private var inputRow: some View {
@@ -377,13 +377,13 @@ private struct AskOnPageConversation: View {
     @State private var revealedQuestionID: UUID?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ScrollViewReader { proxy in
             ScrollView(.vertical) {
                 VStack(alignment: .leading, spacing: 18) {
-                    ForEach(state.service.messages) { message in
+                    ForEach(state.service.messages) { message in WithPerceptionTracking {
                         messageView(message, proxy: proxy)
-                    }
+                    } }
                     if let message = state.service.current {
                         messageView(message, proxy: proxy)
                     }
@@ -396,7 +396,7 @@ private struct AskOnPageConversation: View {
             .frame(height: min(max(contentHeight, 1), state.conversationHeightLimit))
             .mask(fades)
         }
-    }
+    } }
 
     private func messageView(_ message: AskOnPageService.Message, proxy: ScrollViewProxy) -> some View {
         AskOnPageMessageView(message: message, state: state, controller: controller)
@@ -428,7 +428,7 @@ private struct AskOnPageMessageView: View {
     @State private var pulse = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 16) {
             Text(message.question).font(.body.bold()).foregroundStyle(Color(state.tone.question(dark: scheme == .dark)))
                 .fixedSize(horizontal: false, vertical: true)
@@ -443,21 +443,21 @@ private struct AskOnPageMessageView: View {
                 Text("[Older messages hidden]").font(.subheadline).foregroundStyle(.secondary)
             }
             if let answer = message.answer {
-                ForEach(Array(answer.quotes.enumerated()), id: \.offset) { index, quote in
+                ForEach(Array(answer.quotes.enumerated()), id: \.offset) { index, quote in WithPerceptionTracking {
                     AskOnPageQuote(quote: quote, finished: answer.isComplete,
                         status: state.service.quoteNavigation.flatMap { $0.messageID == message.id && $0.index == index ? $0.status : nil }) {
                         controller?.findQuote(messageID: message.id, index: index)
                     }
-                }
+                } }
                 if answer.isComplete {
                     answerText(answer).font(.body).foregroundStyle(.primary.opacity(0.8))
                         .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                 } else {
                     // While it streams, a line per Text: only the last one is laid out again (#417).
                     VStack(alignment: .leading, spacing: 0) {
-                        ForEach(Array(AskOnPage.lines(answer.text).enumerated()), id: \.offset) { _, line in
+                        ForEach(Array(AskOnPage.lines(answer.text).enumerated()), id: \.offset) { _, line in WithPerceptionTracking {
                             AskOnPageLine(text: line).equatable()
-                        }
+                        } }
                     }
                 }
             } else if state.service.isLoading {
@@ -472,7 +472,7 @@ private struct AskOnPageMessageView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
+    } }
 
     private func answerText(_ answer: AskOnPage.Answer) -> Text {
         guard let emphasisRange = answer.emphasisRange,
@@ -487,9 +487,9 @@ private struct AskOnPageMessageView: View {
 private struct AskOnPageLine: View, Equatable {
     let text: String
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Text(text).font(.body).foregroundStyle(.primary.opacity(0.8)).fixedSize(horizontal: false, vertical: true)
-    }
+    } }
 }
 
 /// Literal native source text on the existing 2 pt rule; provisional/absent text cannot navigate.
@@ -501,7 +501,7 @@ private struct AskOnPageQuote: View {
     @State private var hovered = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(alignment: .top, spacing: 10) {
             Rectangle().fill(Color.primary.opacity(0.1)).frame(width: 2)
             VStack(alignment: .leading, spacing: 0) {
@@ -538,7 +538,7 @@ private struct AskOnPageQuote: View {
             }
         }
         .fixedSize(horizontal: false, vertical: true)
-    }
+    } }
 }
 
 private extension Color {

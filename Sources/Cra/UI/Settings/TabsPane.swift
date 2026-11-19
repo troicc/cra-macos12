@@ -9,16 +9,16 @@ struct TabsPane: View {
     @Environment(\.compatSidebarStore) private var store
     @State private var showsKeepActiveSites = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         @Perception.Bindable var store = store
         SettingsCardPane {
             // #305: onboarding's "Choose where the address bar goes". Arc keeps it in View ▸ Show Toolbar.
             SettingsHeader("Address bar")
             SettingsFeatureCard {
                 HStack(spacing: 12) {
-                    ForEach(AddressBarPlacement.allCases, id: \.self) { placement in
+                    ForEach(AddressBarPlacement.allCases, id: \.self) { placement in WithPerceptionTracking {
                         AddressBarTile(placement: placement, selection: $store.settings.addressBarPlacement)
-                    }
+                    } }
                 }
                 .padding(.top, 12)
                 .padding(.bottom, 8)
@@ -105,10 +105,10 @@ struct TabsPane: View {
             }
             SettingsFootnote(tabSleepNote)
         }
-        .sheet(isPresented: $showsKeepActiveSites) {
+        .sheet(isPresented: $showsKeepActiveSites) { WithPerceptionTracking {
             KeepActiveSitesView().environment(\.compatSidebarStoreBox, store)
-        }
-    }
+        } }
+    } }
 
     private var keepActiveDetail: String {
         let lead = "Tabs on these sites stay in memory and keep running, however long they’re hidden."
@@ -143,7 +143,7 @@ private struct AddressBarTile: View {
 
     private static let width: CGFloat = 150
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let selected = selection == placement
         let k = Self.width / 230
         VStack(spacing: 4) {
@@ -160,5 +160,5 @@ private struct AddressBarTile: View {
         .accessibilityLabel("\(placement.title): the address bar \(placement.detail.lowercased())")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction { selection = placement }
-    }
+    } }
 }

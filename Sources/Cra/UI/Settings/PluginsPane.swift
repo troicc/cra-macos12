@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct PluginsPane: View {
@@ -7,7 +8,7 @@ struct PluginsPane: View {
     @State private var error: String?
     @State private var preparing = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         SettingsCardPane {
             SettingsHeader("Live folder plugins")
             SettingsCard {
@@ -16,7 +17,7 @@ struct PluginsPane: View {
                         Text("No plugins installed.").font(.system(size: 13)).foregroundStyle(.secondary)
                     } trailing: { EmptyView() }
                 }
-                ForEach(Array(registry.packages.sorted { $0.manifest.name < $1.manifest.name }.enumerated()), id: \.element.manifest.id) { index, package in
+                ForEach(Array(registry.packages.sorted { $0.manifest.name < $1.manifest.name }.enumerated()), id: \.element.manifest.id) { index, package in WithPerceptionTracking {
                     if index > 0 { SettingsCardDivider() }
                     SettingsCardRow {
                         VStack(alignment: .leading, spacing: 2) {
@@ -33,7 +34,7 @@ struct PluginsPane: View {
                             )).labelsHidden().toggleStyle(.arcSwitch)
                         }
                     }
-                }
+                } }
             }
             HStack {
                 Button("Add Plugin…") { add() }
@@ -49,12 +50,12 @@ struct PluginsPane: View {
             }.padding(.top, 7.5)
             SettingsFootnote("Create folders from the sidebar’s Live Folders menu. Disabling or removing a plugin keeps its existing folders and tabs.")
             if let error { SettingsFootnote(error).foregroundStyle(.red) }
-            ForEach(Array(registry.failures.enumerated()), id: \.offset) { _, message in
+            ForEach(Array(registry.failures.enumerated()), id: \.offset) { _, message in WithPerceptionTracking {
                 SettingsFootnote(message).foregroundStyle(.red)
-            }
+            } }
         }
         .disabled(registry.reloading || preparing)
-    }
+    } }
 
     private func add() {
         guard let window = AppDialog.parentWindow else { return }

@@ -1,6 +1,7 @@
 import AppKit
 import CraCEF
 import SwiftUI
+import Perception
 
 /// Arc's Previews card beside a Gmail, Google Calendar, Linear, Notion, Figma or Confluence
 /// favorite or pinned tab (Arc 1.172.1, measured on Victor's signed-in Arc, 8 Nov 2026; CraCore
@@ -425,7 +426,7 @@ private struct MeetingReminderView: View {
         return "In \(max(1, Int(ceil(Double(s) / 60)))) min · " + CalendarPreview.timeRange(event)
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         CardStyle.card(
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -448,7 +449,7 @@ private struct MeetingReminderView: View {
             }
             .padding(.horizontal, FavoritePreviewMetrics.inset).padding(.vertical, 10)
             .frame(width: FavoritePreviewMetrics.width))
-    }
+    } }
 }
 
 // MARK: - Panel
@@ -605,7 +606,7 @@ private struct SignInCard: View {
     let text: String
     let signIn: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         CardStyle.card(
             VStack(spacing: 8) {
                 Text(text).font(.system(size: 13)).multilineTextAlignment(.center).foregroundStyle(.white.opacity(0.78))
@@ -613,7 +614,7 @@ private struct SignInCard: View {
             }
             .padding(.vertical, 14).padding(.horizontal, 16)
             .frame(width: FavoritePreviewMetrics.width))
-    }
+    } }
 }
 
 /// Arc's round buttons at the card's bottom right: 32 pt, dark with a light rim (＋), or lighter (gear).
@@ -624,8 +625,8 @@ private struct RoundButton: View {
     let run: (CGPoint) -> Void
     @State private var hovered = false
 
-    var body: some View {
-        GeometryReader { g in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { g in WithPerceptionTracking {
             Circle()
                 .fill(light ? Color.white.opacity(hovered ? 0.3 : 0.24) : Color(white: hovered ? 0.2 : 0.14))
                 .overlay(Circle().strokeBorder(Color.white.opacity(light ? 0 : 0.14), lineWidth: 1))
@@ -637,12 +638,12 @@ private struct RoundButton: View {
                     let f = g.frame(in: .global)
                     run(CGPoint(x: f.midX, y: f.maxY))
                 }
-        }
+        } }
         .frame(width: FavoritePreviewMetrics.buttonSize, height: FavoritePreviewMetrics.buttonSize)
         .accessibilityElement()
         .accessibilityLabel(label)
         .accessibilityAddTraits(.isButton)
-    }
+    } }
 }
 
 private struct GmailPreviewView: View {
@@ -651,9 +652,9 @@ private struct GmailPreviewView: View {
     let open: (String) -> Void
     let compose: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         if inbox.mails.isEmpty { empty } else { list }
-    }
+    } }
 
     /// Arc's "exhale" card (docs/screenshots/arc-gmail-preview-empty.png): 240 pt wide, the line
     /// centred 23.5 pt down, the leaf 38.5 pt, the card 62.5 pt tall.
@@ -675,10 +676,10 @@ private struct GmailPreviewView: View {
             ZStack(alignment: .bottomTrailing) {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 0) {
-                        ForEach(Array(inbox.mails.enumerated()), id: \.offset) { i, mail in
+                        ForEach(Array(inbox.mails.enumerated()), id: \.offset) { i, mail in WithPerceptionTracking {
                             if i > 0 { Rectangle().fill(CardStyle.line).frame(height: 1) }
                             MailRow(mail: mail, now: now) { mail.link.map(open) }
-                        }
+                        } }
                     }
                 }
                 RoundButton(symbol: "plus", label: "New Email") { _ in compose() }
@@ -700,9 +701,9 @@ private struct RecentPagesPreviewView: View {
     let open: (String) -> Void
     let new: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         if pages.isEmpty { empty } else { list }
-    }
+    } }
 
     /// Arc's empty line, in the Gmail card's empty card.
     private var empty: some View {
@@ -722,10 +723,10 @@ private struct RecentPagesPreviewView: View {
             ZStack(alignment: .bottomTrailing) {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 0) {
-                        ForEach(Array(pages.enumerated()), id: \.offset) { i, page in
+                        ForEach(Array(pages.enumerated()), id: \.offset) { i, page in WithPerceptionTracking {
                             if i > 0 { Rectangle().fill(CardStyle.line).frame(height: 1) }
                             PageRow(page: page, now: now, icon: favicon(page.url)) { open(page.url) }
-                        }
+                        } }
                         Color.clear.frame(height: room)
                     }
                 }
@@ -745,7 +746,7 @@ private struct PageRow: View {
     let open: () -> Void
     @State private var hovered = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 8) {
             Group {
                 if let icon { Image(nsImage: icon).resizable().interpolation(.high) } else {
@@ -770,7 +771,7 @@ private struct PageRow: View {
         .help(page.url)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
-    }
+    } }
 }
 
 /// Arc's mail row: sender and age, the subject, two lines of the mail, 11 pt in.
@@ -780,7 +781,7 @@ private struct MailRow: View {
     let open: () -> Void
     @State private var hovered = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(mail.from).font(.system(size: 13, weight: .semibold)).lineLimit(1)
@@ -805,7 +806,7 @@ private struct MailRow: View {
         .onTapGesture(perform: open)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
-    }
+    } }
 }
 
 /// Arc's Calendar card: today from the current hour, an hour per 42 pt with its label at the top
@@ -828,9 +829,9 @@ struct CalendarPreviewView: View {
 
     static let nowColor = Color(red: 1, green: 0.94, blue: 0.78)
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         if state.signedOut { signIn } else { timeline }
-    }
+    } }
 
     /// Arc's CalendarPreviewLoginView: a sign-in, in the card's style.
     private var signIn: some View {
@@ -853,7 +854,7 @@ struct CalendarPreviewView: View {
                     ScrollView(.vertical, showsIndicators: false) {
                         ZStack(alignment: .topLeading) {
                             VStack(spacing: 0) {
-                                ForEach(0..<24, id: \.self) { h in
+                                ForEach(0..<24, id: \.self) { h in WithPerceptionTracking {
                                     VStack(alignment: .leading, spacing: 0) {
                                         Rectangle().fill(CardStyle.line).frame(height: 1)
                                         Text(CalendarPreview.hourLabel(h)).font(.system(size: 11)).foregroundStyle(CardStyle.secondary)
@@ -862,23 +863,23 @@ struct CalendarPreviewView: View {
                                     }
                                     .frame(height: hour)
                                     .id(h)
-                                }
+                                } }
                             }
-                            GeometryReader { g in
+                            GeometryReader { g in WithPerceptionTracking {
                                 let width = g.size.width - FavoritePreviewMetrics.eventsLeft - FavoritePreviewMetrics.eventsRight
                                 // The now line under the events, so it never runs through a title; its dot stays clear of them.
                                 nowLine(width: g.size.width).offset(y: nowY(hour) - 3)
-                                ForEach(Array(placed.enumerated()), id: \.offset) { _, p in
+                                ForEach(Array(placed.enumerated()), id: \.offset) { _, p in WithPerceptionTracking {
                                     let w = width / CGFloat(p.columns)
                                     EventBlock(event: p.event, now: now, compact: p.height < 30, join: actions.join, open: actions.open)
                                         .frame(width: max(0, w - 2), height: max(0, p.height - 2), alignment: .topLeading)
                                         .clipped()
                                         .offset(x: FavoritePreviewMetrics.eventsLeft + CGFloat(p.column) * w, y: p.top + 1)
-                                }
-                            }
+                                } }
+                            } }
                         }
                         .frame(height: 24 * hour)
-                        .background(GeometryReader { _ in Color.clear.onAppear { scrollToNow(scroller) } })
+                        .background(GeometryReader { _ in WithPerceptionTracking { Color.clear.onAppear { scrollToNow(scroller) } } })
                     }
                 }
                 HStack(spacing: FavoritePreviewMetrics.buttonGap) {
@@ -922,7 +923,7 @@ private struct EventBlock: View {
     let open: (String) -> Void
     @State private var hovered = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let past = event.end <= now
         HStack(alignment: compact ? .center : .top, spacing: 4) {
             if compact {
@@ -957,5 +958,5 @@ private struct EventBlock: View {
         .onHover { hovered = $0 }
         .onTapGesture { event.link.map(open) }
         .accessibilityElement(children: .combine)
-    }
+    } }
 }

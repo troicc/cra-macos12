@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Arc 1.171's space icon picker (SpaceIconPickerState): a popover under the header's icon with
 /// Emoji / Icon tabs and a trash button, a search field, an 8-wide grid that opens on the current
@@ -22,7 +23,7 @@ struct SpaceIconPicker: View {
 
     private let columns = Array(repeating: GridItem(.fixed(31), spacing: 0), count: 8)
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             HStack(spacing: 14) {
                 Picker("", selection: $tab) {
@@ -65,7 +66,7 @@ struct SpaceIconPicker: View {
             tab = currentImage != nil ? 2 : (currentSymbol == nil ? 0 : 1)
             searchFocused = true
         }
-    }
+    } }
 
     private var emojiGrid: some View {
         VStack(spacing: 0) {
@@ -74,9 +75,9 @@ struct SpaceIconPicker: View {
                     LazyVGrid(columns: columns, spacing: 0) {
                         if query.isEmpty {
                             // One run across the categories, as in Arc (its 🐦 opens in the second column).
-                            ForEach(EmojiCatalog.all, id: \.self) { e in cell(e).id(e.emoji) }
+                            ForEach(EmojiCatalog.all, id: \.self) { e in WithPerceptionTracking { cell(e).id(e.emoji) } }
                         } else {
-                            ForEach(EmojiCatalog.search(query), id: \.self) { e in cell(e) }
+                            ForEach(EmojiCatalog.search(query), id: \.self) { e in WithPerceptionTracking { cell(e) } }
                         }
                     }
                     .padding(.horizontal, 11)
@@ -85,7 +86,7 @@ struct SpaceIconPicker: View {
                 .onAppear { proxy.scrollTo(rowAnchor(current), anchor: .top) }
                 Divider().padding(.horizontal, 11)
                 HStack(spacing: 0) {
-                    ForEach(EmojiCatalog.categories) { c in
+                    ForEach(EmojiCatalog.categories) { c in WithPerceptionTracking {
                         Button {
                             query = ""
                             proxy.scrollTo(c.entries.first?.emoji, anchor: .top)
@@ -94,7 +95,7 @@ struct SpaceIconPicker: View {
                         }
                         .buttonStyle(.plain)
                         .foregroundStyle(.secondary)
-                    }
+                    } }
                 }
                 .padding(.bottom, 4)
             }
@@ -133,9 +134,9 @@ struct SpaceSymbolGrid: View {
     /// Arc's order, shared with the Arc importer (`ArcSpaceIcon.picker`).
     static let symbols = SpaceIcon.pickerSymbols
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         LazyVGrid(columns: Array(repeating: GridItem(.fixed(31), spacing: 0), count: 8), spacing: 0) {
-            ForEach(Self.symbols, id: \.self) { name in
+            ForEach(Self.symbols, id: \.self) { name in WithPerceptionTracking {
                 Image(systemName: name)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.primary)
@@ -148,12 +149,12 @@ struct SpaceSymbolGrid: View {
                     .contentShape(Rectangle())
                     .onHover { hovered = $0 ? name : (hovered == name ? nil : hovered) }
                     .onTapGesture { onPick(name) }
-            }
+            } }
         }
         .padding(.horizontal, 11)
         .padding(.top, 11)
         .frame(maxHeight: .infinity, alignment: .top)
-    }
+    } }
 }
 
 /// The Image tab (not in Arc): a PNG or SVG, or any picture, from a file chooser or dropped on the
@@ -164,7 +165,7 @@ struct SpaceImageTab: View {
     @State private var targeted = false
     @State private var failed = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -204,5 +205,5 @@ struct SpaceImageTab: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .padding(.top, 6)
-    }
+    } }
 }

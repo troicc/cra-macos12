@@ -193,9 +193,9 @@ struct SettingsTabBar: View {
     var body: some View {
         WithPerceptionTracking {
             HStack(spacing: 1) {
-                ForEach(SettingsTab.allCases) { tab in
+                ForEach(SettingsTab.allCases) { tab in WithPerceptionTracking {
                     SettingsTabButton(tab: tab, selected: nav.tab == tab) { nav.show(tab) }
-                }
+                } }
             }
             .frame(maxWidth: .infinity)
         }
@@ -208,7 +208,7 @@ private struct SettingsTabButton: View {
     let action: () -> Void
     @Environment(\.colorScheme) private var scheme
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(action: action) {
             VStack(spacing: 3) {
                 Image(systemName: tab.symbol)
@@ -233,5 +233,5 @@ private struct SettingsTabButton: View {
         .buttonStyle(.plain)
         .accessibilityLabel(tab.title(fullName: NSFullUserName()))
         .accessibilityAddTraits(selected ? .isSelected : [])
-    }
+    } }
 }

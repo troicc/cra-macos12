@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Settings ▸ Advanced ▸ Agents: one click adds Cra to an agent's MCP settings, like the
 /// "connect your agent" screens of apps that work inside agents. The six agents most people use
@@ -8,7 +9,7 @@ struct MCPAgentTiles: View {
     private let installer = MCPAgentInstaller.shared
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Add Cra to an agent").font(.system(size: 13))
@@ -17,13 +18,13 @@ struct MCPAgentTiles: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(MCPAgentSetup.agents.filter(\.popular)) { agent in
+                ForEach(MCPAgentSetup.agents.filter(\.popular)) { agent in WithPerceptionTracking {
                     MCPAgentTile(agent: agent, installer: installer)
-                }
+                } }
             }
             HStack(spacing: 8) {
                 Menu("Other Agent") {
-                    ForEach(MCPAgentSetup.agents.filter { !$0.popular }) { agent in
+                    ForEach(MCPAgentSetup.agents.filter { !$0.popular }) { agent in WithPerceptionTracking {
                         let state = installer.state(agent)
                         Button {
                             installer.add(agent)
@@ -31,7 +32,7 @@ struct MCPAgentTiles: View {
                             if state == .current { Label(agent.name, systemImage: "checkmark") } else { Text(agent.name) }
                         }
                         .disabled(!installer.isInstalled(agent))
-                    }
+                    } }
                 }
                 .fixedSize()
                 Button("Copy MCP Configuration") {
@@ -51,7 +52,7 @@ struct MCPAgentTiles: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 9)
         .onAppear { installer.refresh() }
-    }
+    } }
 }
 
 /// One agent: its app icon (a terminal for a CLI), its name and whether Cra is in it.
@@ -60,7 +61,7 @@ private struct MCPAgentTile: View {
     let installer: MCPAgentInstaller
     @State private var hovering = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let state = installer.state(agent)
         let installed = installer.isInstalled(agent)
         Button { installer.add(agent) } label: {
@@ -93,7 +94,7 @@ private struct MCPAgentTile: View {
         }
         .accessibilityLabel(agent.name)
         .accessibilityValue(help(state, installed: installed))
-    }
+    } }
 
     @ViewBuilder private var icon: some View {
         if let image = installer.icon(agent) {

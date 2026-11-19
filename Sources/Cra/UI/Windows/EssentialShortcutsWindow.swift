@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Arc's Help ▸ Essential Keyboard Shortcuts (KeyboardShortcutsEDUWindowController, Arc 1.172.1,
 /// captured 7 Nov 2026 at 2x): a 475 × 462 pt floating window, #161C2F, traffic lights only,
@@ -61,7 +62,7 @@ private struct EssentialShortcutsView: View {
     let bindings: KeyBindingRegistry
     let viewAll: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center) {
                 Text("Essential Keyboard Shortcuts")
@@ -74,7 +75,7 @@ private struct EssentialShortcutsView: View {
             .frame(height: 28)
             .padding(.top, 37.5)
             .padding(.bottom, 3)
-            ForEach(Array(EssentialShortcutsWindow.rows.enumerated()), id: \.offset) { i, row in
+            ForEach(Array(EssentialShortcutsWindow.rows.enumerated()), id: \.offset) { i, row in WithPerceptionTracking {
                 if i > 0 {
                     Rectangle().fill(Color(red: 0x21 / 255, green: 0x27 / 255, blue: 0x39 / 255)).frame(height: 1)
                 }
@@ -85,25 +86,25 @@ private struct EssentialShortcutsView: View {
                     }
                     Spacer(minLength: 8)
                     HStack(spacing: 3) {
-                        ForEach(Array((bindings.action(row.action)?.primary?.caps ?? []).enumerated()), id: \.offset) { _, cap in
+                        ForEach(Array((bindings.action(row.action)?.primary?.caps ?? []).enumerated()), id: \.offset) { _, cap in WithPerceptionTracking {
                             KeyCap(text: cap == "⇥" ? "TAB" : cap)
-                        }
+                        } }
                     }
                 }
                 .frame(height: 72)
-            }
+            } }
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 30)
         .frame(width: 475, height: 462, alignment: .topLeading)
-    }
+    } }
 }
 
 private struct ViewAllButton: View {
     let action: () -> Void
     @State private var hover = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(action: action) {
             HStack(spacing: 8) {
                 Text("View All").font(.system(size: 14))
@@ -117,7 +118,7 @@ private struct ViewAllButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hover = $0 }
-    }
+    } }
 }
 
 /// One key cap, as Arc draws it: a light blue face in a blue rim, on a darker blue lip.
@@ -127,7 +128,7 @@ private struct KeyCap: View {
     private static let rim = Color(red: 0x2F / 255, green: 0x6F / 255, blue: 0xE8 / 255)
     private static let lip = Color(red: 0x2B / 255, green: 0x60 / 255, blue: 0xC4 / 255)
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .top) {
             RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Self.lip)
             RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Self.rim).frame(height: 26)
@@ -144,5 +145,5 @@ private struct KeyCap: View {
                 .frame(height: 26)
         }
         .frame(width: text.count > 1 ? 34 : 28, height: 29)
-    }
+    } }
 }

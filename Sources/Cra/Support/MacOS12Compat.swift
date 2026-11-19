@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 extension Task where Success == Never, Failure == Never {
     /// macOS 12-compatible sleep in seconds (replaces macOS 13+ `Task.sleep(for: .seconds(...))`).
@@ -74,12 +75,12 @@ extension View {
             self.onGeometryChange(for: type, of: transform, action: action)
         } else {
             self.background(
-                GeometryReader { proxy in
+                GeometryReader { proxy in WithPerceptionTracking {
                     let value = transform(proxy)
                     Color.clear
                         .onAppear { action(value) }
                         .onChange(of: value) { newValue in action(newValue) }
-                }
+                } }
             )
         }
     }
@@ -167,7 +168,7 @@ extension NSView {
 struct CompatURLDropModifier: ViewModifier {
     let onDrop: (URL) -> Void
 
-    func body(content: Content) -> some View {
+    func body(content: Content) -> some View { WithPerceptionTracking {
         if #available(macOS 13.0, *) {
             content.dropDestination(for: URL.self) { urls, _ in
                 guard let url = urls.first else { return false }
@@ -177,7 +178,7 @@ struct CompatURLDropModifier: ViewModifier {
         } else {
             content
         }
-    }
+    } }
 }
 
 extension CGRect {

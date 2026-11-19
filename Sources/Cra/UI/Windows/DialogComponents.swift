@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Arc's dialog card (measured against Arc 1.172.1's Quit and Delete Space sheets, 7 Nov 2026: #161C2F).
 enum DialogTheme {
@@ -12,11 +13,11 @@ enum DialogTheme {
 struct DialogSurface: ViewModifier {
     var cornerRadius: CGFloat = 24
 
-    func body(content: Content) -> some View {
+    func body(content: Content) -> some View { WithPerceptionTracking {
         content
             .background(DialogTheme.card, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .environment(\.colorScheme, .dark)
-    }
+    } }
 }
 
 struct DialogButton: View {
@@ -54,7 +55,7 @@ struct DialogButton: View {
     private var destructive: Bool { style == .destructive && enabled }
     private var primary: Bool { style != .secondary }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(action: action) {
             HStack(spacing: 9) {
                 Text(title).font(.system(size: 13, weight: .medium))
@@ -99,7 +100,7 @@ struct DialogButton: View {
         .accessibilityLabel(title)
         .fixedSize()
         .clickTarget(title)
-    }
+    } }
 }
 
 struct DialogScrollContent<Content: View>: NSViewRepresentable {

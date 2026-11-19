@@ -8,7 +8,7 @@ struct LinksPane: View {
     @Environment(\.compatSidebarStore) private var store
     @State private var showsAirTrafficControl = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         @Perception.Bindable var store = store
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 0) {
@@ -116,10 +116,10 @@ struct LinksPane: View {
             }
         }
         .compatScrollIndicators(.automatic)
-        .sheet(isPresented: $showsAirTrafficControl) {
+        .sheet(isPresented: $showsAirTrafficControl) { WithPerceptionTracking {
             AirTrafficControlView().environment(\.compatSidebarStoreBox, store)
-        }
-    }
+        } }
+    } }
 
     private var shortcut: String { KeyBindingRegistry.shared.action("newLittleWindow")?.primary?.display ?? "⌥⌘N" }
 
@@ -138,13 +138,13 @@ struct LinksPane: View {
 private struct LinksHero: View {
     @Environment(\.colorScheme) private var scheme
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .bottom) {
             (scheme == .dark ? Color(.sRGB, red: 0.87, green: 0.49, blue: 0.52) : Color(.sRGB, red: 1, green: 0.63, blue: 0.64))
             // The Little Window: a title bar with its address pill and "Open in" button, cut off by the band's edge.
             VStack(spacing: 4) {
                 HStack(spacing: 6) {
-                    HStack(spacing: 5) { ForEach(0..<3) { _ in Circle().fill(Color.white.opacity(0.55)).frame(width: 6, height: 6) } }
+                    HStack(spacing: 5) { ForEach(0..<3) { _ in WithPerceptionTracking { Circle().fill(Color.white.opacity(0.55)).frame(width: 6, height: 6) } } }
                     Text("Work").font(.system(size: 6.5)).padding(.horizontal, 5).padding(.vertical, 2)
                         .background(Capsule().fill(Color.white.opacity(0.5)))
                     Spacer(minLength: 0)
@@ -166,5 +166,5 @@ private struct LinksHero: View {
         .frame(height: 135)
         .clipShape(SettingsScallopedBand())
         .accessibilityHidden(true)
-    }
+    } }
 }

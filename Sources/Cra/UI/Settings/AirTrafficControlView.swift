@@ -11,7 +11,7 @@ struct AirTrafficControlView: View {
     @Environment(\.dismiss) private var dismiss
     @FocusState private var focusedRoute: UUID?
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         @Perception.Bindable var store = store
         VStack(spacing: 0) {
             HStack(spacing: 0) {
@@ -47,15 +47,15 @@ struct AirTrafficControlView: View {
         .frame(width: 508, height: 440)
         // Arc opens the sheet with nothing focused; AppKit would select the first route's text.
         .onAppear { DispatchQueue.main.async { NSApp.keyWindow?.makeFirstResponder(nil) } }
-    }
+    } }
 
     private var routes: some View {
         ScrollViewReader { proxy in
             ScrollView(.vertical) {
                 VStack(spacing: 24) {
-                    ForEach(store.settings.linkRoutes) { route in
+                    ForEach(store.settings.linkRoutes) { route in WithPerceptionTracking {
                         routeRow(route.id).id(route.id)
-                    }
+                    } }
                 }
                 .padding(.top, 24)
                 .padding(.bottom, 16)
@@ -139,10 +139,10 @@ struct AirTrafficControlView: View {
             Picker("Open in", selection: shown) {
                 Section("Open in Space") {
                     Text("Most Recent Space").tag(LinkDestination.mostRecentSpace)
-                    ForEach(spaces) { space in
+                    ForEach(spaces) { space in WithPerceptionTracking {
                         let title = SpaceMenuTitle.plain(space.labeled)
                         Text(title.title).help(title.fullTitle).tag(LinkDestination.space(space.id))
-                    }
+                    } }
                 }
                 Divider()
                 Text("Little Window").tag(LinkDestination.littleWindowInUse)
@@ -153,10 +153,10 @@ struct AirTrafficControlView: View {
                 Picker("Little Window space", selection: littleSpace) {
                     Section("Little Window in") {
                         Text("Most Recent Space").tag(UUID?.none)
-                        ForEach(spaces) { space in
+                        ForEach(spaces) { space in WithPerceptionTracking {
                             let title = SpaceMenuTitle.plain(space.labeled)
                             Text(title.title).help(title.fullTitle).tag(UUID?.some(space.id))
-                        }
+                        } }
                     }
                 }
                 .labelsHidden()
@@ -189,11 +189,11 @@ struct AirTrafficControlView: View {
 
 /// Secondary 13 pt label with its symbol in front ("🔗 URL", "↳ Open in").
 private struct RouteLabelStyle: LabelStyle {
-    func makeBody(configuration: Configuration) -> some View {
+    func makeBody(configuration: Configuration) -> some View { WithPerceptionTracking {
         HStack(spacing: 6) {
             configuration.icon.font(.system(size: 12))
             configuration.title.font(.system(size: 13))
         }
         .foregroundStyle(.secondary)
-    }
+    } }
 }

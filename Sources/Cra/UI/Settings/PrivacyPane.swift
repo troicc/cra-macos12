@@ -15,7 +15,7 @@ struct PrivacyPane: View {
     @Environment(\.compatSidebarStore) private var store
     let actions: SettingsActions
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         @Perception.Bindable var store = store
         SettingsCardPane {
             SettingsHeader("Content blocking")
@@ -75,7 +75,7 @@ struct PrivacyPane: View {
                 }
             }
         }
-    }
+    } }
 
     @State private var dnsError: String?
 
@@ -97,7 +97,7 @@ private struct BlockListRows: View {
     @State private var text = ""
     @State private var error: String?
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         SettingsPlainRow("Block lists",
                          detail: "Add a list to block more, like ads in your country. Cra uses its domain rules (hosts files, domain lists and Adblock Plus “||domain^” rules) and fetches it again when Cra opens, once a day at most.",
                          trailing: {
@@ -130,7 +130,7 @@ private struct BlockListRows: View {
         if let error {
             SettingsFootnote(error).foregroundStyle(.red).padding(.bottom, 8)
         }
-    }
+    } }
 
     private func addTyped() {
         apply(CustomBlocklist.adding(text, to: addresses, httpsOnly: false))
@@ -170,7 +170,7 @@ private struct BlockListLine: View {
     let lists: BlockLists
     let remove: (String) -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let list = lists.cached[address]
         HStack(alignment: .center, spacing: 8) {
             VStack(alignment: .leading, spacing: 1) {
@@ -198,7 +198,7 @@ private struct BlockListLine: View {
                 .help("Remove this list")
                 .accessibilityLabel("Remove \(list?.name ?? fallbackName)")
         }
-    }
+    } }
 
     private var fallbackName: String {
         guard let url = URL(string: address) else { return address }
@@ -216,7 +216,7 @@ private struct SecureDNSRows: View {
     @State private var editingCustom = false
     @State private var customText = ""
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         SettingsPlainRow("Secure DNS",
                            detail: "Before a page loads, the site’s address is looked up over an encrypted connection, so the network you’re on can’t see or change it." + (footnote.map { " " + $0 } ?? ""),
                            trailing: { EmptyView() }) {
@@ -250,7 +250,7 @@ private struct SecureDNSRows: View {
                     .disabled(dns.isManaged || customText.trimmingCharacters(in: .whitespacesAndNewlines) == liveCustom)
             }
         }
-    }
+    } }
 
     private var current: SecureDNSChoice { dns.prefs?.choice ?? .automatic }
     private var liveCustom: String? { current == .custom ? dns.prefs?.templates : nil }

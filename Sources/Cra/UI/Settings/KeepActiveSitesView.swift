@@ -1,4 +1,5 @@
 import SwiftUI
+import Perception
 
 /// Settings ▸ Tabs ▸ Memory ▸ "Always keep these sites active" (GitHub #458): Arc's list at
 /// arc://settings/performance, drawn as Air Traffic Control's sheet is. Chrome's dialog adds a typed
@@ -9,7 +10,7 @@ struct KeepActiveSitesView: View {
     @Environment(\.dismiss) private var dismiss
     @FocusState private var focusedSite: UUID?
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -43,7 +44,7 @@ struct KeepActiveSitesView: View {
         .frame(width: 508, height: 440)
         .onAppear { DispatchQueue.main.async { NSApp.keyWindow?.makeFirstResponder(nil) } }
         .onDisappear { store.settings.tidyKeepActiveSites() }
-    }
+    } }
 
     /// Chrome's two ways in: an address typed into a new row, or a site a tab has open now.
     private var addMenu: some View {
@@ -52,9 +53,9 @@ struct KeepActiveSitesView: View {
             let open = openSites
             if !open.isEmpty {
                 Section("Currently Open Sites") {
-                    ForEach(open, id: \.self) { host in
+                    ForEach(open, id: \.self) { host in WithPerceptionTracking {
                         Button(host) { addSite(host) }
-                    }
+                    } }
                 }
             }
         } label: {
@@ -69,9 +70,9 @@ struct KeepActiveSitesView: View {
         ScrollViewReader { proxy in
             ScrollView(.vertical) {
                 VStack(spacing: 12) {
-                    ForEach(store.settings.keepActiveSites) { site in
+                    ForEach(store.settings.keepActiveSites) { site in WithPerceptionTracking {
                         siteRow(site.id).id(site.id)
-                    }
+                    } }
                 }
                 .padding(.vertical, 20)
                 .padding(.leading, 8)

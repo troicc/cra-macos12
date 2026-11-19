@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Settings' first tab, laid out as Arc 1.172.2's Account tab (Victor, 12 Nov 2026): the default-browser banner over
 /// the window, the member card on the left with Share, Save and Copy under it, and on the right the cards: Sync where
@@ -8,7 +9,7 @@ struct SyncPane: View {
     private let system = SystemIntegration.shared
     @State private var sharing = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ScrollView(.vertical) {
             VStack(spacing: 0) {
                 if !system.isDefaultBrowser {
@@ -33,8 +34,8 @@ struct SyncPane: View {
         }
         .compatScrollIndicators(.automatic)
         .onAppear { system.refresh() }
-        .sheet(isPresented: $sharing) { ShareCraSheet() }
-    }
+        .sheet(isPresented: $sharing) { WithPerceptionTracking { ShareCraSheet() } }
+    } }
 }
 
 /// Arc's "Arc isn't your default browser." pill with its blue "Make Arc your default" button.
@@ -42,7 +43,7 @@ private struct DefaultBrowserBanner: View {
     let prompting: Bool
     let action: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 12) {
             Text("Cra isn’t your default browser.").font(.system(size: 13))
             Button(action: action) {
@@ -56,7 +57,7 @@ private struct DefaultBrowserBanner: View {
         }
         .padding(.leading, 16).padding(.trailing, 6).frame(height: 36)
         .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Color.primary.opacity(0.12)))
-    }
+    } }
 }
 
 // MARK: - The card
@@ -74,7 +75,7 @@ private struct MemberCardColumn: View {
         (try? AppPaths.supportDir.resourceValues(forKeys: [.creationDateKey]))?.creationDate ?? Date()
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let card = card
         VStack(spacing: 18) {
             MemberCardFace(card: card)
@@ -96,7 +97,7 @@ private struct MemberCardColumn: View {
             .font(.system(size: 16))
             .foregroundStyle(.secondary)
         }
-    }
+    } }
 
     @MainActor static func render(_ card: MemberCard) -> NSImage? {
         compatRenderSwiftUIImage(MemberCardFace(card: card).environment(\.colorScheme, .light), scale: 2)
@@ -132,7 +133,7 @@ struct MemberCardFace: View {
 
     let card: MemberCard
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) {
             art
             Text(card.name)
@@ -146,11 +147,11 @@ struct MemberCardFace: View {
                 .padding(.top, 2)
             Spacer(minLength: 0)
             HStack(spacing: -6) {
-                ForEach(Array(card.stamps.enumerated()), id: \.offset) { i, stamp in
+                ForEach(Array(card.stamps.enumerated()), id: \.offset) { i, stamp in WithPerceptionTracking {
                     // Older stamps fade, as Arc's first anniversary is paler than its second.
                     MemberStamp(stamp: stamp, color: theme.deep.opacity(i == card.stamps.count - 1 ? 1 : 0.5))
                         .rotationEffect(.degrees(i % 2 == 0 ? -8 : 6))
-                }
+                } }
             }
             .padding(.bottom, 10)
             HStack(alignment: .bottom) {
@@ -174,7 +175,7 @@ struct MemberCardFace: View {
         .frame(width: Self.size.width, height: Self.size.height)
         .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Self.cream))
         .accessibilityElement(children: .combine)
-    }
+    } }
 
     /// Arc's card shows a gradient with a wavy bite out of it, the cream showing through. Cra's bite is its own mark:
     /// the C's four ribbons, large and cropped by the right and bottom edges, each cut 72 % through the member's
@@ -221,18 +222,18 @@ private struct SegmentedC: View {
     static let radius: CGFloat = 0.50, width: CGFloat = 0.27
     static let opening = 38.0, overlap = 10.0, cut = 0.72
 
-    var body: some View {
-        GeometryReader { g in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { g in WithPerceptionTracking {
             let span = (360 - 2 * Self.opening + 3 * Self.overlap) / 4
             ZStack {
-                ForEach(0..<4, id: \.self) { i in
+                ForEach(0..<4, id: \.self) { i in WithPerceptionTracking {
                     let start = Self.opening + Double(i) * (span - Self.overlap)
                     Ribbon(start: start, end: start + span)
                         .stroke(.black.opacity(Self.cut), style: StrokeStyle(lineWidth: g.size.height * Self.width, lineCap: .round))
-                }
+                } }
             }
-        }
-    }
+        } }
+    } }
 
     private struct Ribbon: Shape {
         let start: Double, end: Double
@@ -250,7 +251,7 @@ private struct MemberStamp: View {
     let stamp: MemberCard.Stamp
     let color: Color
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack {
             Circle().fill(MemberCardFace.cream)
             Circle().stroke(color, lineWidth: 1.5)
@@ -271,7 +272,7 @@ private struct MemberStamp: View {
             .foregroundStyle(color)
         }
         .frame(width: 40, height: 40)
-    }
+    } }
 }
 
 /// The diagonal lines in the card's date box.
@@ -295,7 +296,7 @@ private struct Hatch: Shape {
 private struct ShareCraCard: View {
     let share: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         SettingsCard {
             SettingsCardRow {
                 Text("Share Cra with a Friend").font(.system(size: 13))
@@ -310,7 +311,7 @@ private struct ShareCraCard: View {
                 .padding(.vertical, 10)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-    }
+    } }
 }
 
 /// Arc's "Share Arc with a friend" sheet: the mark, a big title, and a ticket with the message and the link over a
@@ -323,7 +324,7 @@ struct ShareCraSheet: View {
     private static let ticket = Color(.sRGB, red: 0.13, green: 0.19, blue: 0.2)
     private static let green = MemberCardFace.green
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             HStack {
                 Spacer()
@@ -364,7 +365,7 @@ struct ShareCraSheet: View {
         .frame(width: 470)
         .background(Self.background)
         .environment(\.colorScheme, .dark)
-    }
+    } }
 
     private var ticket: some View {
         VStack(alignment: .leading, spacing: 0) {

@@ -13,7 +13,7 @@ struct MaxPane: View {
     /// Max's mark in Arc's tile: Apple's, or sparkles before macOS 15.1.
     static var glyph: String { SettingsTab.max.symbol }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         @Perception.Bindable var store = store
         let available = service.status == .available
         let features = [store.settings.tidyTabs, store.settings.tidyTabTitles, store.settings.tidyDownloads, store.settings.fiveSecondPreviews, store.settings.askOnPage, store.settings.instantLinks]
@@ -103,7 +103,7 @@ struct MaxPane: View {
                 try? await Task.compatSleep(seconds: 3)
             }
         }
-    }
+    } }
 }
 
 /// Under the card, where Arc says Max sends data to its AI partners: what runs where, or why it
@@ -113,7 +113,7 @@ private struct MaxFooter: View {
     let instantLinks: Bool
     let openSettings: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 3) {
             Text(status.explanation)
                 .font(.system(size: 12)).foregroundStyle(.secondary)
@@ -134,12 +134,12 @@ private struct MaxFooter: View {
             }
         }
         .frame(maxWidth: .infinity)
-    }
+    } }
 }
 
 /// Arc's Ask on Page picture (AskOnPagePreview): a find card with its Ask button on pink.
 private struct AskOnPagePicture: View {
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack {
             Color(red: 0.96, green: 0.62, blue: 0.62)
             VStack(alignment: .trailing, spacing: 0) {
@@ -160,13 +160,13 @@ private struct AskOnPagePicture: View {
             }
             .frame(width: 70)
         }
-    }
+    } }
 }
 
 /// Arc's Tidy Downloads picture: the "Download renamed to:" card on blue.
 private struct TidyDownloadsPicture: View {
     private let grey = Color(white: 0.55)
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack {
             Color(red: 0.16, green: 0.20, blue: 0.93)
             VStack(alignment: .leading, spacing: 1) {
@@ -183,14 +183,14 @@ private struct TidyDownloadsPicture: View {
             .frame(width: 70)
             .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Color.white))
         }
-    }
+    } }
 }
 
 /// Arc's Tidy Tab Titles picture: a renamed tab, "Double-click to rename" under it, sparkles round
 /// it, on mauve.
 private struct TidyTabTitlesPicture: View {
     private let ink = Color(red: 0.42, green: 0.27, blue: 0.62)
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack {
             Color(red: 0.61, green: 0.48, blue: 0.62)
             HStack(spacing: 4) {
@@ -205,19 +205,19 @@ private struct TidyTabTitlesPicture: View {
             }
             .padding(.horizontal, 5).padding(.vertical, 2.5)
             .background(Capsule().fill(Color.white))
-            ForEach(0..<9, id: \.self) { i in
+            ForEach(0..<9, id: \.self) { i in WithPerceptionTracking {
                 Circle().fill(Color.white.opacity(i % 2 == 0 ? 0.9 : 0.6))
                     .frame(width: i % 3 == 0 ? 1.6 : 1.1, height: i % 3 == 0 ? 1.6 : 1.1)
                     .offset(x: [-33, -20, -6, 9, 22, 34, -26, 15, 30][i], y: [-12, 13, -14, 12, -13, 10, 9, -11, -6][i])
-            }
+            } }
         }
-    }
+    } }
 }
 
 /// Arc's Tidy Tabs picture: the squiggle, the broom and a ✕ on lavender.
 private struct TidyTabsPicture: View {
     private let ink = Color(red: 0.55, green: 0.52, blue: 0.72)
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack {
             Color(red: 0.84, green: 0.82, blue: 0.96)
             HStack(spacing: 5) {
@@ -229,35 +229,35 @@ private struct TidyTabsPicture: View {
             }
             .offset(x: -2)
         }
-    }
+    } }
 }
 
 /// Instant Links' picture: the command bar with a search and the ⇧ and ↩ keycaps, on pink.
 private struct InstantLinksPicture: View {
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack {
             Color(red: 0.96, green: 0.62, blue: 0.62)
             HStack(spacing: 3) {
                 Image(systemName: "magnifyingglass").font(.system(size: 5, weight: .medium)).foregroundStyle(Color(white: 0.55))
                 RoundedRectangle(cornerRadius: 1).fill(Color(white: 0.8)).frame(width: 20, height: 2)
                 Spacer(minLength: 0)
-                ForEach(["⇧", "↩"], id: \.self) { key in
+                ForEach(["⇧", "↩"], id: \.self) { key in WithPerceptionTracking {
                     Text(key).font(.system(size: 5.5, weight: .semibold)).foregroundStyle(Color(white: 0.35))
                         .frame(width: 8, height: 8)
                         .background(RoundedRectangle(cornerRadius: 2, style: .continuous).fill(Color(white: 0.92)))
-                }
+                } }
             }
             .padding(.horizontal, 5)
             .frame(width: 70, height: 16)
             .background(Capsule().fill(Color.white))
         }
-    }
+    } }
 }
 
 /// Arc's 5-Second Previews picture: a summary card with bullet points on teal.
 private struct FiveSecondPreviewsPicture: View {
     private let grey = Color(white: 0.55)
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack {
             Color(red: 0.10, green: 0.52, blue: 0.50)
             VStack(alignment: .leading, spacing: 2) {
@@ -287,7 +287,7 @@ private struct FiveSecondPreviewsPicture: View {
             .frame(width: 70)
             .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Color.white))
         }
-    }
+    } }
 }
 
 private struct Squiggle: Shape {
@@ -310,13 +310,13 @@ private struct MaxBanner: View {
     private static let blue = Color(.sRGB, red: 0.2, green: 0.235, blue: 1)
     private static let pink = Color(.sRGB, red: 1, green: 0.62, blue: 0.62)
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack {
             Self.blue
             // Flowers round the edges, some cut by them, clear of the mark and the word.
-            ForEach(Array([(-300, -8, 30.0), (-240, -38, 14.0), (-200, 28, 44.0), (-160, -30, 22.0), (165, 8, 20.0), (210, -30, 30.0), (275, 22, 24.0), (340, -26, 36.0)].enumerated()), id: \.offset) { _, f in
+            ForEach(Array([(-300, -8, 30.0), (-240, -38, 14.0), (-200, 28, 44.0), (-160, -30, 22.0), (165, 8, 20.0), (210, -30, 30.0), (275, 22, 24.0), (340, -26, 36.0)].enumerated()), id: \.offset) { _, f in WithPerceptionTracking {
                 Flower().fill(Self.pink).frame(width: f.2, height: f.2).offset(x: CGFloat(f.0), y: CGFloat(f.1))
-            }
+            } }
             HStack(spacing: 10) {
                 BrandMark(size: 64)
                 Text("Max").font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(.white)
@@ -327,7 +327,7 @@ private struct MaxBanner: View {
         .frame(height: 125)
         .clipShape(SettingsScallopedBand())
         .accessibilityHidden(true)
-    }
+    } }
 }
 
 /// A flower of four lobes.

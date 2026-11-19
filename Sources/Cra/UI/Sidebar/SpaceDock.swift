@@ -1,12 +1,13 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Arc's Library glyph: a filled box with a small confetti puff (cloud, dot, triangle) rising
 /// from it. Drawn once per theme brightness into an image for the dock's Library button.
 struct LibraryGlyph: View {
     let dark: Bool
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let ink = dark ? Color.white.opacity(0.55) : Color.black.opacity(0.26)
         ZStack(alignment: .top) {
             // Arc's box has no lid line: a 13×10 rounded box with a light slot near the top.
@@ -29,7 +30,7 @@ struct LibraryGlyph: View {
         .offset(y: -3.5)
         .foregroundStyle(ink)
         .frame(width: 28, height: 28)
-    }
+    } }
 
     @MainActor private static var cache: [Bool: NSImage] = [:]
 

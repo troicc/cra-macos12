@@ -1,4 +1,5 @@
 import SwiftUI
+import Perception
 
 /// Arc 1.171's "Which Spaces should use this Profile?" (the second step of Create a new Profile),
 /// measured from a 2x capture (3 Nov): a 450 × 506 pt card; each space as a 63 × 95 pt card in its
@@ -9,7 +10,7 @@ struct ProfileSpacesStep: View {
     let onBack: () -> Void
     let onCreate: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) {
             ProfileAvatar().padding(.top, 38.5)
             Text("Which Spaces should use this Profile?")
@@ -25,11 +26,11 @@ struct ProfileSpacesStep: View {
                 .padding(.top, 12)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 13) {
-                    ForEach(spaces) { s in
+                    ForEach(spaces) { s in WithPerceptionTracking {
                         SpaceChoice(space: s, on: ticked.contains(s.id)) {
                             if ticked.contains(s.id) { ticked.remove(s.id) } else { ticked.insert(s.id) }
                         }
-                    }
+                    } }
                 }
                 .padding(.horizontal, 38.5)
             }
@@ -49,7 +50,7 @@ struct ProfileSpacesStep: View {
         .padding(.horizontal, 38.5)
         .frame(width: 450, height: 506)
         .modifier(DialogSurface())
-    }
+    } }
 }
 
 /// One space in the step above: the theme as a little window, the circle, the name.
@@ -58,7 +59,7 @@ private struct SpaceChoice: View {
     let on: Bool
     let toggle: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(action: toggle) {
             VStack(spacing: 14.5) {
                 ZStack {
@@ -89,7 +90,7 @@ private struct SpaceChoice: View {
         .buttonStyle(.plain)
         .accessibilityLabel(space.title)
         .accessibilityValue(on ? "1" : "0")
-    }
+    } }
 }
 
 /// Arc 1.171's Spaces ▸ Change Profile (3 Nov): "Change <space>’s Profile" on a 450 × 338 pt
@@ -117,13 +118,13 @@ struct ChangeProfileDialog: View {
         _choice = State(initialValue: .existing(space.profileID))
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         if creating {
             NewProfileDialog(spaces: others, ticked: [space.id], onCreate: onCreate, onCancel: onCancel)
         } else {
             picker
         }
-    }
+    } }
 
     private var choiceName: String {
         switch choice {
@@ -187,8 +188,8 @@ struct ChangeProfileDialog: View {
                     .padding(.horizontal, 8)
                     .frame(height: 27)
                     .background(Color(hex: "#2E36E7"), in: RoundedRectangle(cornerRadius: 4, style: .continuous))
-                    .background(GeometryReader { g in Color.clear.onAppear { pill = g.frame(in: .global) }
-                        .onChange(of: g.frame(in: .global)) { f in pill = f } })
+                    .background(GeometryReader { g in WithPerceptionTracking { Color.clear.onAppear { pill = g.frame(in: .global) }
+                        .onChange(of: g.frame(in: .global)) { f in pill = f } } })
                 }
                 .buttonStyle(.plain)
                 .fixedSize()
@@ -218,7 +219,7 @@ struct ChangeProfileDialog: View {
 private struct SpaceProfileIcon: View {
     let space: Space
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .bottomTrailing) {
             ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color(hex: "#4049DC"))
@@ -248,5 +249,5 @@ private struct SpaceProfileIcon: View {
             .overlay(Circle().strokeBorder(NewProfileDialog.card, lineWidth: 2))
         }
         .frame(width: 68, height: 68)
-    }
+    } }
 }

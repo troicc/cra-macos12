@@ -463,7 +463,7 @@ private struct CommandBarSplash: View {
     @State private var blurRadius: CGFloat = 0
     @State private var opacity: Double = 1
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         color
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(margin)
@@ -474,7 +474,7 @@ private struct CommandBarSplash: View {
                 blurRadius = 150
                 opacity = 0
             }
-    }
+    } }
 }
 
 /// One suggestion: icon, "Title — detail", and "Switch to Tab" + arrow for open tabs.

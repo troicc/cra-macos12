@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Arc 1.171's "Create a new Profile" dialog (Set Profile ▸ New Profile…), measured from a 2x
 /// capture (1 Nov): a 450 × 426 pt navy card centred on the window, which dims behind it. Next
@@ -25,13 +26,13 @@ struct NewProfileDialog: View {
         _ticked = State(initialValue: ticked)
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         if choosingSpaces {
             ProfileSpacesStep(spaces: spaces, ticked: $ticked, onBack: { choosingSpaces = false }) { onCreate(trimmed, ticked) }
         } else {
             nameStep
         }
-    }
+    } }
 
     private func next() {
         guard !trimmed.isEmpty else { return }
@@ -92,7 +93,7 @@ struct NewProfileDialog: View {
 
 /// Arc's profile glyph: a lavender smiley in a dashed ring with a green plus badge.
 struct ProfileAvatar: View {
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .bottomTrailing) {
             ZStack {
                 Circle().strokeBorder(Color(hex: "#6262A3").opacity(0.45), style: StrokeStyle(lineWidth: 1, dash: [2, 2]))
@@ -117,7 +118,7 @@ struct ProfileAvatar: View {
             .offset(x: 1, y: 1)
         }
         .frame(width: 61, height: 61)
-    }
+    } }
 }
 
 struct SmileArc: Shape {

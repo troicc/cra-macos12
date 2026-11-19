@@ -1,4 +1,5 @@
 import SwiftUI
+import Perception
 
 struct SidebarIconButton: View {
     let symbol: String
@@ -25,7 +26,7 @@ struct SidebarIconButton: View {
         return Color.black.opacity(enabled && active ? 0.59 : 0.24)
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: iconSize, weight: weight))
@@ -37,5 +38,5 @@ struct SidebarIconButton: View {
         .disabled(!enabled)
         .onHover { hover = $0 }
         .arcTooltip(help, optionHelp: optionHelp)
-    }
+    } }
 }

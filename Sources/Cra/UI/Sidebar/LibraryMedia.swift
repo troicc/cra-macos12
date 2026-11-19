@@ -242,7 +242,7 @@ struct MediaOptInCard: View {
     let dark: Bool
     let show: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 8) {
             Image(systemName: "photo.on.rectangle.angled")
                 .font(.system(size: 28, weight: .medium))
@@ -272,7 +272,7 @@ struct MediaOptInCard: View {
         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(dark ? Color(white: 0.18) : .white)
             .shadow(color: .black.opacity(0.15), radius: 10, y: 3))
         .environment(\.colorScheme, dark ? .dark : .light)
-    }
+    } }
 }
 
 /// Arc's menu on a media pick (the tile's right-click, the preview's ⋯): Copy Image, Send via

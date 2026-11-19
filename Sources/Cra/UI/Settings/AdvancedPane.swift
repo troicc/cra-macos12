@@ -11,7 +11,7 @@ struct AdvancedPane: View {
     private static let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev"
     @Environment(\.compatSidebarStore) private var store
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         @Perception.Bindable var store = store
         @Perception.Bindable var updater = SoftwareUpdater.shared
         let newLittleWindow = KeyBindingRegistry.shared.action("newLittleWindow")?.primary?.display ?? "⌥⌘N"
@@ -158,7 +158,7 @@ struct AdvancedPane: View {
                             get: { MCPServer.shared.allowsHistory }, set: { MCPServer.shared.allowsHistory = $0 }))
                             .toggleStyle(.arcSwitch).labelsHidden()
                     }
-                    ForEach(MCPServer.shared.agents) { agent in
+                    ForEach(MCPServer.shared.agents) { agent in WithPerceptionTracking {
                         SettingsCardDivider()
                         SettingsCardRow {
                             VStack(alignment: .leading, spacing: 2) {
@@ -168,7 +168,7 @@ struct AdvancedPane: View {
                         } trailing: {
                             Button("Forget") { MCPServer.shared.forget(agent) }
                         }
-                    }
+                    } }
                 }
             }
 
@@ -195,7 +195,7 @@ struct AdvancedPane: View {
                 .padding(14)
             }
         }
-    }
+    } }
 
     private var importDetail: String {
         let names = ImportSource.allCases.filter { $0.kind != .safari && $0.isAvailable }.map(\.name)
@@ -213,14 +213,14 @@ struct SearchEnginePicker: View {
     @State private var engines: [ChromiumSearchEngine] = []
     @State private var selected = ""
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Picker("Search engine", selection: Binding(get: { selected }, set: pick)) {
             ForEach(engines, id: \.keyword) { Text($0.name).tag($0.keyword) }
         }
         .labelsHidden()
         .fixedSize()
         .onAppear(perform: reload)
-    }
+    } }
 
     private func reload() {
         let current = SearchEngines.shared.defaultEngine(profilePath: nil, legacy: store.settings.searchEngine)
@@ -243,12 +243,12 @@ private struct ResetTranslatedSitesButton: View {
     let reset: () -> Void
     @State private var done = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(done ? "Done" : "Reset Translated-site Prompts") {
             reset()
             done = true
             Task { try? await Task.compatSleep(seconds: 2); done = false }
         }
         .disabled(done)
-    }
+    } }
 }

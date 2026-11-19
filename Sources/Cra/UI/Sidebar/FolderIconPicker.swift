@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 struct FolderIconPicker: View {
     let current: FolderSymbol?
@@ -15,7 +16,7 @@ struct FolderIconPicker: View {
         return image
     }()
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             HStack(spacing: 14) {
                 Text("Icon").font(.system(size: 13, weight: .bold))
@@ -34,7 +35,7 @@ struct FolderIconPicker: View {
             .frame(height: 18)
             .padding(.top, 13.5)
             LazyVGrid(columns: Array(repeating: GridItem(.fixed(31), spacing: 0), count: 8), spacing: 0) {
-                ForEach(FolderSymbol.allCases, id: \.self) { symbol in
+                ForEach(FolderSymbol.allCases, id: \.self) { symbol in WithPerceptionTracking {
                     Button { onPick(symbol) } label: {
                         Image(nsImage: symbol.image)
                             .resizable()
@@ -53,7 +54,7 @@ struct FolderIconPicker: View {
                     .accessibilityLabel(symbol.title)
                     .accessibilityAddTraits(symbol == current ? .isSelected : [])
                     .help(symbol.title)
-                }
+                } }
             }
             .padding(.horizontal, 11)
             .padding(.top, 11)
@@ -61,7 +62,7 @@ struct FolderIconPicker: View {
         }
         .foregroundStyle(.primary)
         .frame(width: 272, height: 144)
-    }
+    } }
 
     @MainActor
     static func show(current: FolderSymbol?, anchor: NSView, rect: NSRect, onPick: @escaping (FolderSymbol?) -> Void) {

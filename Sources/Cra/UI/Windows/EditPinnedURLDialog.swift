@@ -1,4 +1,5 @@
 import SwiftUI
+import Perception
 
 /// Arc 1.171's "Edit Pinned URL" dialog (a pinned tab's or favorite's Edit Pinned URL…),
 /// measured from a 2x capture (1 Nov, #54): a 393 × 265 pt navy card over the dimmed window, the
@@ -18,7 +19,7 @@ struct EditPinnedURLDialog: View {
 
     private var destination: String? { TypedURL.pinnedDestination(text) }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) {
             Text("Edit Pinned URL")
                 .font(.system(size: 17.5, weight: .semibold))
@@ -61,5 +62,5 @@ struct EditPinnedURLDialog: View {
         .frame(width: 393, height: 265)
         .modifier(DialogSurface())
         .onAppear { focused = true }
-    }
+    } }
 }

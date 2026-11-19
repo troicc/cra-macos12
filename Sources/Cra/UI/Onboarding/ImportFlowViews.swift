@@ -58,7 +58,7 @@ struct ImportFlowView: View {
     @Perception.Bindable var model: ImportFlowModel
     @Environment(\.colorScheme) private var scheme
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let c = ImportColors(dark: scheme == .dark)
         ZStack(alignment: .topLeading) {
             c.background
@@ -105,7 +105,7 @@ struct ImportFlowView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             model.recheckFullDiskAccess()
         }
-    }
+    } }
 }
 
 // MARK: - Steps
@@ -114,7 +114,7 @@ struct StepHeader: View {
     let title: String
     let subtitle: String
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         // Dia sets these in Exposure; New York is the closest face macOS ships.
         Text(title)
             .font(.system(size: 29, weight: .regular, design: .serif))
@@ -129,7 +129,7 @@ struct StepHeader: View {
             .foregroundStyle(c.body)
             .frame(width: 431, height: 46, alignment: .topLeading)
             .offset(y: ImportMetrics.subtitleTop)
-    }
+    } }
 }
 
 /// Dia's NewDefaultBrowserView: three DefaultBrowserCheckboxRows (title and
@@ -137,7 +137,7 @@ struct StepHeader: View {
 private struct DefaultBrowserStep: View {
     @Perception.Bindable var model: ImportFlowModel
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let system = model.system
         ZStack(alignment: .topLeading) {
             Text("Fast, secure, and packed with all your browser essentials")
@@ -179,13 +179,13 @@ private struct DefaultBrowserStep: View {
             .frame(width: ImportMetrics.columnWidth + 2)
             .offset(x: -1, y: ImportMetrics.buttonTop)
         }
-    }
+    } }
 }
 
 private struct SourceStep: View {
     let model: ImportFlowModel
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .topLeading) {
             StepHeader(title: "Import now to get connected",
                        subtitle: "Import once and stay in your flow. Your spaces, tabs, folders and extensions come with you.", c: c)
@@ -194,9 +194,9 @@ private struct SourceStep: View {
             // Three rows of cards fit; more browsers scroll under a soft edge.
             ScrollView {
                 LazyVGrid(columns: cols, alignment: .leading, spacing: ImportMetrics.gap) {
-                    ForEach(model.listedSources) { s in
+                    ForEach(model.listedSources) { s in WithPerceptionTracking {
                         BrowserCard(source: s, model: model, c: c)
-                    }
+                    } }
                 }
                 .padding(.vertical, 8)
             }
@@ -232,13 +232,13 @@ private struct SourceStep: View {
                     .offset(x: -1, y: ImportMetrics.buttonTop)
             }
         }
-    }
+    } }
 }
 
 private struct SpacesStep: View {
     @Perception.Bindable var model: ImportFlowModel
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let plan = model.plan
         let name = model.source?.rawValue ?? "Arc"
         ZStack(alignment: .topLeading) {
@@ -247,7 +247,7 @@ private struct SpacesStep: View {
                        subtitle: "We'll import your \(name) spaces, tabs, and folders to Cra.", c: c)
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
-                    ForEach(Array((plan?.spaces ?? []).enumerated()), id: \.offset) { i, sp in
+                    ForEach(Array((plan?.spaces ?? []).enumerated()), id: \.offset) { i, sp in WithPerceptionTracking {
                         SelectableRow(c: c, checked: model.selectedSpaces.contains(i),
                                       onHover: { if $0 { model.previewSpace = i } },
                                       toggle: { model.toggleSpace(i) }) {
@@ -259,7 +259,7 @@ private struct SpacesStep: View {
                             .frame(width: 24)
                             RowTitle(title: sp.title, caption: "\(sp.itemCount) tab\(sp.itemCount == 1 ? "" : "s")", c: c)
                         }
-                    }
+                    } }
                     if let plan, !plan.favorites.isEmpty || !plan.archive.isEmpty || model.includeSettings {
                         Text("Also bring over")
                             .font(.system(size: 12, weight: .medium)).foregroundStyle(c.caption)
@@ -293,20 +293,20 @@ private struct SpacesStep: View {
             PrimaryButton(title: "Continue", c: c, enabled: model.hasAnythingSelected) { model.continueFromSpaces() }
                 .offset(x: -1, y: ImportMetrics.buttonTop)
         }
-    }
+    } }
 }
 
 private struct ExtensionsStep: View {
     let model: ImportFlowModel
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .topLeading) {
             BackLink(c: c) { model.go(.spaces) }
             StepHeader(title: "Import your extensions",
                        subtitle: "Pick your essentials. You can always add more extensions later as you settle in with Cra.", c: c)
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
-                    ForEach(model.extensions) { e in
+                    ForEach(model.extensions) { e in WithPerceptionTracking {
                         let installed = ExtensionStore.isInstalled(id: e.id)
                         // Arc keeps extensions per profile: say which profiles it goes to (#131).
                         let profiles = model.profileNames(of: e).map { " · " + $0.joined(separator: ", ") } ?? ""
@@ -317,7 +317,7 @@ private struct ExtensionsStep: View {
                                         : (e.isEnabled ? e.version + profiles : "Turned off in \(model.source?.rawValue ?? "Arc")"),
                                      c: c)
                         }
-                    }
+                    } }
                 }
                 .padding(.bottom, 12)
             }
@@ -334,13 +334,13 @@ private struct ExtensionsStep: View {
             .frame(width: ImportMetrics.columnWidth + 2)
             .offset(x: -1, y: ImportMetrics.buttonTop)
         }
-    }
+    } }
 }
 
 private struct ProgressStep: View {
     let model: ImportFlowModel
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .topLeading) {
             Text("\(model.finished ? "Imported" : "Importing") from \(model.source?.rawValue ?? "Arc")")
                 .font(.system(size: 29, weight: .regular, design: .serif))
@@ -385,20 +385,20 @@ private struct ProgressStep: View {
                           c: c, enabled: model.finished) { model.continueFromProgress() }
                 .offset(x: -1, y: ImportMetrics.buttonTop)
         }
-    }
+    } }
 }
 
 // MARK: - Controls
 
 /// Soft top and bottom edges on the scrolling lists.
 struct ScrollFade: View {
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: 8)
             Color.black
             LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 16)
         }
-    }
+    } }
 }
 
 /// Dia's ImportBrowserItemView: logo, name, radio; the selected card shows how
@@ -412,7 +412,7 @@ private struct BrowserCard: View {
     /// Checked as the card draws, so it clears once Full Disk Access is on.
     private var blocked: Bool { model.source == source ? model.needsFullDiskAccess : source.needsFullDiskAccess }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let selected = model.source == source
         // Listed but not on this Mac (or nothing to bring over): shown dimmed, not pickable.
         let available = model.sources.contains(source)
@@ -460,27 +460,27 @@ private struct BrowserCard: View {
         .accessibilityLabel(available ? source.rawValue : "\(source.rawValue), \(source.isInstalled ? "nothing to import" : "not on this Mac")")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction { withAnimation(.easeOut(duration: 0.18)) { model.select(source) } }
-    }
+    } }
 }
 
 /// 24 pt ring (1.5 pt); selected adds a 17.5 pt disc.
 struct RadioDot: View {
     let on: Bool
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack {
             Circle().strokeBorder(on ? c.ink.opacity(0.98) : c.radioRing, lineWidth: 1.5)
             if on { Circle().fill(c.ink.opacity(0.98)).frame(width: 17.5, height: 17.5).transition(.scale.combined(with: .opacity)) }
         }
         .frame(width: 24, height: 24)
-    }
+    } }
 }
 
 /// Dia's rebrand_checkbox: 18 pt rounded square, filled with a tick when on.
 struct CheckBox: View {
     let on: Bool
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let shape = RoundedRectangle(cornerRadius: 5, style: .continuous)
         ZStack {
             if on {
@@ -491,7 +491,7 @@ struct CheckBox: View {
             }
         }
         .frame(width: 18, height: 18)
-    }
+    } }
 }
 
 /// Dia's ImportSelectableCheckBox / SpaceCheckboxView row.
@@ -505,7 +505,7 @@ struct SelectableRow<Content: View>: View {
     @ViewBuilder let content: () -> Content
     @State private var hover = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
         HStack(spacing: 12) {
             content()
@@ -522,47 +522,47 @@ struct SelectableRow<Content: View>: View {
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(checked ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction { if !disabled { withAnimation(.easeOut(duration: 0.15)) { toggle() } } }
-    }
+    } }
 }
 
 struct RowTitle: View {
     let title: String
     let caption: String
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 1) {
             Text(title).font(.system(size: 14, weight: .medium)).foregroundStyle(c.title).lineLimit(1)
             Text(caption).font(.system(size: 12)).foregroundStyle(c.caption).lineLimit(1)
         }
-    }
+    } }
 }
 
 struct RowSymbol: View {
     let name: String
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Image(systemName: name).font(.system(size: 14)).foregroundStyle(c.body).frame(width: 24)
-    }
+    } }
 }
 
 struct ExtensionIcon: View {
     let image: NSImage?
     let size: CGFloat
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         if let image {
             Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit).frame(width: size, height: size)
         } else {
             Image(systemName: "puzzlepiece.extension.fill").font(.system(size: size * 0.6)).foregroundStyle(c.body).frame(width: size, height: size)
         }
-    }
+    } }
 }
 
 struct CategoryTile: View {
     let category: ImportCategory
     let c: ImportColors
     var height: CGFloat = 64
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
         HStack(spacing: 12) {
             Image(systemName: category.symbol).font(.system(size: 15)).foregroundStyle(c.body).frame(width: 22)
@@ -586,7 +586,7 @@ struct CategoryTile: View {
         .frame(width: ImportMetrics.card.width, height: height)
         .overlay(shape.strokeBorder(c.tileBorder, lineWidth: 1))
         .animation(.easeOut(duration: 0.2), value: category.state)
-    }
+    } }
 }
 
 /// Full-width primary button with Dia's return-key glyph.
@@ -598,7 +598,7 @@ struct PrimaryButton: View {
     let action: () -> Void
     @State private var hover = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button { if enabled { action() } } label: {
             HStack(spacing: 8) {
                 Text(title).font(.system(size: 13, weight: .semibold))
@@ -615,7 +615,7 @@ struct PrimaryButton: View {
         .onHover { hover = $0 }
         .accessibilityLabel(title)
         .frame(width: width)
-    }
+    } }
 }
 
 struct SecondaryButton: View {
@@ -624,7 +624,7 @@ struct SecondaryButton: View {
     let action: () -> Void
     @State private var hover = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(action: action) {
             Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(c.body)
                 .frame(maxWidth: .infinity)
@@ -635,14 +635,14 @@ struct SecondaryButton: View {
         .buttonStyle(.plain)
         .onHover { hover = $0 }
         .accessibilityLabel(title)
-    }
+    } }
 }
 
 struct BackLink: View {
     let c: ImportColors
     let action: () -> Void
     @State private var hover = false
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(action: action) {
             HStack(spacing: 4) {
                 Image(systemName: "chevron.left").font(.system(size: 11, weight: .semibold))
@@ -654,14 +654,14 @@ struct BackLink: View {
         .buttonStyle(.plain)
         .onHover { hover = $0 }
         .offset(y: 22)
-    }
+    } }
 }
 
 private struct CloseButton: View {
     let c: ImportColors
     let action: () -> Void
     @State private var hover = false
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(action: action) {
             Image(systemName: "xmark").font(.system(size: 15, weight: .light))
                 .foregroundStyle(c.dark ? .white.opacity(hover ? 0.95 : 0.7) : .black.opacity(hover ? 0.8 : 0.5))
@@ -673,5 +673,5 @@ private struct CloseButton: View {
         .keyboardShortcut(.cancelAction)
         .onHover { hover = $0 }
         .accessibilityLabel("Close")
-    }
+    } }
 }

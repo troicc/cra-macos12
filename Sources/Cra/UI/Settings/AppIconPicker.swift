@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 /// Arc's Icon tab (Arc 1.172.2, GitHub #372): a radio list of the app icons, a 64 pt picture and its name on each row,
@@ -9,15 +10,15 @@ struct IconPane: View {
     private let icons = AppIconManager.shared
     @State private var error: String?
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         SettingsCardPane {
             SettingsCard {
-                ForEach(Array(AppIconManager.presets.enumerated()), id: \.element.id) { i, option in
+                ForEach(Array(AppIconManager.presets.enumerated()), id: \.element.id) { i, option in WithPerceptionTracking {
                     if i > 0 { divider }
                     IconRow(name: option.name, image: icons.image(for: option.id), selected: icons.selectedID == option.id) {
                         icons.select(option.id)
                     } trailing: { EmptyView() }
-                }
+                } }
                 divider
                 IconRow(name: "Your own icon", image: icons.customImage, selected: icons.selectedID == AppIconManager.customID) {
                     if icons.customImage == nil { chooseImage() } else { icons.select(AppIconManager.customID) }
@@ -32,7 +33,7 @@ struct IconPane: View {
             SettingsFootnote("Pick any image or drop one on “Your own icon”. It’s sized to match the other icons in the Dock, and a photo or a logo on a background fills the rounded tile. The Dock keeps the icon after Cra quits.")
             if let error { SettingsFootnote(error).foregroundStyle(.red) }
         }
-    }
+    } }
 
     private var divider: some View {
         SettingsCardDivider().padding(.horizontal, 30)
@@ -72,7 +73,7 @@ private struct IconRow<Trailing: View>: View {
     let action: () -> Void
     @ViewBuilder let trailing: Trailing
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 0) {
             Button(action: action) {
                 HStack(spacing: 0) {
@@ -96,7 +97,7 @@ private struct IconRow<Trailing: View>: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(name) app icon")
         .accessibilityAddTraits(selected ? .isSelected : [])
-    }
+    } }
 
     private var radio: some View {
         Circle()

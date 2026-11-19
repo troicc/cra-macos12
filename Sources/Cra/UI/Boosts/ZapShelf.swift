@@ -33,21 +33,21 @@ struct ZapShelfView: View {
     @Perception.Bindable var model: BoostEditorModel
     let colors: ZapShelfColors
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let zapped = model.boost.zapped
         let hint = BoostZap.hint(zapped: zapped, hovered: model.hoveredZap)
         ZStack(alignment: .topLeading) {
             colors.bar
             colors.separator.frame(height: 1)
             HStack(spacing: CGFloat(BoostZap.cellGap)) {
-                ForEach(Array(zapped.enumerated()), id: \.element) { i, selector in
+                ForEach(Array(zapped.enumerated()), id: \.element) { i, selector in WithPerceptionTracking {
                     ZapCell(colors: colors, hovered: model.hoveredZap == i) { model.unzap(selector) }
                         .onHover { on in
                             if on { model.hoveredZap = i } else if model.hoveredZap == i { model.hoveredZap = nil }
                         }
                         .help(selector)
                         .accessibilityLabel("Restore \(selector)")
-                }
+                } }
             }
             .padding(.leading, CGFloat(BoostZap.inset))
             .frame(height: CGFloat(BoostZap.shelfHeight))
@@ -65,7 +65,7 @@ struct ZapShelfView: View {
             .frame(height: CGFloat(BoostZap.shelfHeight))
         }
         .frame(height: CGFloat(BoostZap.shelfHeight))
-    }
+    } }
 
     @ViewBuilder private func hintView(_ hint: BoostZap.Hint, cells: Int) -> some View {
         switch hint {
@@ -105,7 +105,7 @@ private struct ZapCell: View {
     let hovered: Bool
     let action: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(action: action) {
             Image(systemName: "square.slash").font(.system(size: CGFloat(BoostZap.glyphSize), weight: .regular))
                 .foregroundStyle(colors.ink)
@@ -115,7 +115,7 @@ private struct ZapCell: View {
                     .fill(hovered ? colors.cream.blendedToward(.black, 0.105) : colors.cream))
         }
         .buttonStyle(.plain)
-    }
+    } }
 }
 
 /// The page keeps the keyboard: the shelf's first click acts.

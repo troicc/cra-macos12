@@ -13,7 +13,7 @@ struct TwoLineHeader: View {
     let title: String
     let subtitle: String
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Text(title)
             .font(.system(size: 29, weight: .regular, design: .serif))
             .tracking(-0.6)
@@ -30,7 +30,7 @@ struct TwoLineHeader: View {
             .fixedSize(horizontal: false, vertical: true)
             .frame(width: 431, alignment: .topLeading)
             .offset(y: ImportMetrics.subtitleTop + 10)
-    }
+    } }
 }
 
 // MARK: - Cover
@@ -39,7 +39,7 @@ struct TwoLineHeader: View {
 struct CoverStep: View {
     let model: ImportFlowModel
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .topLeading) {
             VStack(alignment: .leading, spacing: 18) {
                 BrandMark(size: 56)
@@ -59,7 +59,7 @@ struct CoverStep: View {
             PrimaryButton(title: "Get Started", c: c, enabled: true) { model.continueFromCover() }
                 .offset(x: -1, y: ImportMetrics.buttonTop)
         }
-    }
+    } }
 }
 
 // MARK: - Privacy (Dia's DisclosureView)
@@ -70,7 +70,7 @@ struct CoverStep: View {
 struct PrivacyStep: View {
     @Perception.Bindable var model: ImportFlowModel
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .topLeading) {
             TwoLineHeader(title: "Privacy in Cra,\nyou're in control",
                           subtitle: "Cra works fully signed out. Your spaces, tabs and archive are plain files on your Mac.", c: c)
@@ -98,7 +98,7 @@ struct PrivacyStep: View {
             PrimaryButton(title: "Continue", c: c, enabled: true) { model.continueFromPrivacy() }
                 .offset(x: -1, y: ImportMetrics.buttonTop)
         }
-    }
+    } }
 }
 
 // MARK: - Unlock passwords and cookies (Dia's ImportProfilePickerView)
@@ -106,7 +106,7 @@ struct PrivacyStep: View {
 struct UnlockStep: View {
     let model: ImportFlowModel
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let many = model.credentialProfiles.count > 1
         ZStack(alignment: .topLeading) {
             BackLink(c: c) { model.go(.source) }
@@ -118,12 +118,12 @@ struct UnlockStep: View {
             if many {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
-                        ForEach(model.credentialProfiles) { p in
+                        ForEach(model.credentialProfiles) { p in WithPerceptionTracking {
                             SelectableRow(c: c, checked: model.selectedProfiles.contains(p.id), toggle: { model.toggleProfile(p.id) }) {
                                 RowSymbol(name: "person.crop.circle", c: c)
                                 RowTitle(title: p.name, caption: "Passwords and sign-ins", c: c)
                             }
-                        }
+                        } }
                     }
                     .padding(.bottom, 12)
                 }
@@ -156,7 +156,7 @@ struct UnlockStep: View {
             .frame(width: ImportMetrics.columnWidth + 2)
             .offset(x: -1, y: ImportMetrics.buttonTop)
         }
-    }
+    } }
 }
 
 // MARK: - Exported file (Dia's SafariExportedDataView; also Firefox and Zen passwords)
@@ -169,7 +169,7 @@ struct ExportedFileStep: View {
     private var isSafari: Bool { model.source?.kind == .safari }
     private var browser: String { model.source?.name ?? "Firefox" }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .topLeading) {
             BackLink(c: c) { model.go(.source) }
             StepHeader(title: isSafari ? "Import from Safari" : "Import \(browser) passwords",
@@ -205,7 +205,7 @@ struct ExportedFileStep: View {
             .frame(width: ImportMetrics.columnWidth + 2)
             .offset(x: -1, y: ImportMetrics.buttonTop)
         }
-    }
+    } }
 
     private func chooseFile() {
         let panel = NSOpenPanel()
@@ -222,7 +222,7 @@ private struct InstructionRow: View {
     let n: Int
     let text: String
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 12) {
             Text("\(n)").font(.system(size: 12, weight: .semibold)).foregroundStyle(c.title)
                 .frame(width: 24, height: 24)
@@ -230,7 +230,7 @@ private struct InstructionRow: View {
             Text(text).font(.system(size: 14)).foregroundStyle(c.body)
             Spacer()
         }
-    }
+    } }
 }
 
 private struct DropWell: View {
@@ -241,7 +241,7 @@ private struct DropWell: View {
     let c: ImportColors
     let choose: () -> Void
     let clear: () -> Void
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
         Button(action: { if fileName == nil { choose() } }) {
             HStack(spacing: 12) {
@@ -270,7 +270,7 @@ private struct DropWell: View {
             .contentShape(shape)
         }
         .buttonStyle(.plain)
-    }
+    } }
 }
 
 // MARK: - Passwords result (Dia's ImportPasswordsAndCookiesResultView)
@@ -278,7 +278,7 @@ private struct DropWell: View {
 struct CredentialsResultStep: View {
     let model: ImportFlowModel
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let ok = model.credentialsSucceeded
         ZStack(alignment: .topLeading) {
             VStack(alignment: .leading, spacing: 16) {
@@ -304,7 +304,7 @@ struct CredentialsResultStep: View {
                 .offset(x: -1, y: ImportMetrics.buttonTop)
             }
         }
-    }
+    } }
 }
 
 // MARK: - Pinned tabs (Dia's PinnedTabsView)
@@ -313,17 +313,17 @@ struct PinnedTabsStep: View {
     @Perception.Bindable var model: ImportFlowModel
     let c: ImportColors
     private let cols = Array(repeating: GridItem(.flexible(), spacing: 10), count: 4)
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .topLeading) {
             StepHeader(title: "Keep your favorites handy",
                        subtitle: "Pin the apps you use most so they're always a click away in Cra.", c: c)
             ScrollView {
                 LazyVGrid(columns: cols, spacing: 10) {
-                    ForEach(model.pinCandidates) { p in
+                    ForEach(model.pinCandidates) { p in WithPerceptionTracking {
                         PinCard(candidate: p, icon: model.pinIcons[p.host], on: model.selectedPins.contains(p.host), c: c) {
                             model.togglePin(p.host)
                         }
-                    }
+                    } }
                 }
                 .padding(.vertical, 8)
             }
@@ -337,7 +337,7 @@ struct PinnedTabsStep: View {
             .offset(x: -1, y: ImportMetrics.buttonTop)
         }
         .onAppear { model.loadPinCandidates() }
-    }
+    } }
 }
 
 private struct PinCard: View {
@@ -347,7 +347,7 @@ private struct PinCard: View {
     let c: ImportColors
     let toggle: () -> Void
     @State private var hover = false
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
         VStack(spacing: 7) {
             ZStack {
@@ -369,7 +369,7 @@ private struct PinCard: View {
         .contentShape(shape)
         .onHover { hover = $0 }
         .onTapGesture { withAnimation(.easeOut(duration: 0.12)) { toggle() } }
-    }
+    } }
 }
 
 // MARK: - Personalization (Dia's PersonalizationView)
@@ -381,14 +381,14 @@ private struct PinCard: View {
 struct PersonalizationStep: View {
     @Perception.Bindable var model: ImportFlowModel
     let c: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .topLeading) {
             StepHeader(title: "Make it yours",
                        subtitle: "Pick the theme color and layout that feel right for you.", c: c)
             HStack(spacing: (ImportMetrics.columnWidth - 34 * CGFloat(SpaceTheme.presets.count)) / CGFloat(SpaceTheme.presets.count - 1)) {
-                ForEach(SpaceTheme.presets.indices, id: \.self) { i in
+                ForEach(SpaceTheme.presets.indices, id: \.self) { i in WithPerceptionTracking {
                     ThemeSwatch(theme: SpaceTheme.presets[i], on: model.chosenTheme == i, c: c) { model.chooseTheme(i) }
-                }
+                } }
             }
             .frame(width: ImportMetrics.columnWidth, alignment: .leading)
             .offset(y: ImportMetrics.listTop)
@@ -404,7 +404,7 @@ struct PersonalizationStep: View {
             PrimaryButton(title: "Continue", c: c, enabled: true) { model.continueFromPersonalization() }
                 .offset(x: -1, y: ImportMetrics.buttonTop)
         }
-    }
+    } }
 }
 
 /// Dia's PersonalizationTabLayoutButton: the illustration at its 230×180 artwork size scaled to
@@ -416,7 +416,7 @@ private struct LayoutTile: View {
 
     private static let width: CGFloat = (ImportMetrics.columnWidth - 12) / 2
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let toolbar = placement == .toolbar
         let selected = model.classicLayout == toolbar
         let k = Self.width / 230
@@ -436,7 +436,7 @@ private struct LayoutTile: View {
         .accessibilityLabel("\(placement.title): the address bar \(placement.detail.lowercased())")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction { model.classicLayout = toolbar }
-    }
+    } }
 }
 
 /// Drawn after Dia's TabLayout/SidebarSelected and friends (230×180 pt): a 3 pt ring, a 2 pt gap,
@@ -447,7 +447,7 @@ struct LayoutArt: View {
     let toolbar: Bool
     let selected: Bool
     let dark: Bool
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let window: Color = dark ? Color(white: 0.2) : Color.black.opacity(0.05)
         let row: Color = dark ? Color(white: 0.36) : Color.black.opacity(0.19)
         let pane: Color = dark ? Color(white: 0.12) : .white
@@ -459,16 +459,16 @@ struct LayoutArt: View {
             RoundedRectangle(cornerRadius: 10, style: .continuous).fill(window)
                 .frame(width: 220, height: 170)
                 .offset(x: 5, y: 5)
-            ForEach(Array(["#FF5F57", "#FEBC2E", "#28C840"].enumerated()), id: \.offset) { i, hex in
+            ForEach(Array(["#FF5F57", "#FEBC2E", "#28C840"].enumerated()), id: \.offset) { i, hex in WithPerceptionTracking {
                 Circle().fill(Color(hex: hex)).frame(width: 5, height: 5)
                     .offset(x: 13 + CGFloat(i) * 8.5, y: 14)
-            }
-            ForEach(0..<3) { i in
+            } }
+            ForEach(0..<3) { i in WithPerceptionTracking {
                 RoundedRectangle(cornerRadius: 4.5, style: .continuous)
                     .fill(i == 0 && !toolbar ? accent : row)
                     .frame(width: 54, height: 14)
                     .offset(x: 10, y: 27 + CGFloat(i) * 19)
-            }
+            } }
             RoundedRectangle(cornerRadius: 6, style: .continuous).fill(pane)
                 .frame(width: 150, height: 160)
                 .overlay(alignment: .top) {
@@ -486,7 +486,7 @@ struct LayoutArt: View {
                 .offset(x: 70, y: 10)
         }
         .frame(width: 230, height: 180, alignment: .topLeading)
-    }
+    } }
 }
 
 private struct ThemeSwatch: View {
@@ -494,7 +494,7 @@ private struct ThemeSwatch: View {
     let on: Bool
     let c: ImportColors
     let tap: () -> Void
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let colors = theme.colors.map { Color(hex: $0) }
         Circle()
             .fill(LinearGradient(colors: colors.count > 1 ? colors : [colors.first ?? .gray, colors.first ?? .gray],
@@ -504,7 +504,7 @@ private struct ThemeSwatch: View {
             .overlay(on ? Image(systemName: "checkmark").font(.system(size: 12, weight: .bold)).foregroundStyle(.white).shadow(radius: 1) : nil)
             .contentShape(Circle())
             .onTapGesture { withAnimation(.easeOut(duration: 0.12)) { tap() } }
-    }
+    } }
 }
 
 
@@ -514,7 +514,7 @@ struct OutroStep: View {
     let model: ImportFlowModel
     let c: ImportColors
     @State private var shown = false
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 22) {
             BrandMark(size: 76)
                 .scaleEffect(shown ? 1 : 0.8)
@@ -533,5 +533,5 @@ struct OutroStep: View {
         }
         .frame(width: ImportWindowController.size.width, height: ImportWindowController.size.height)
         .onAppear { withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.15)) { shown = true } }
-    }
+    } }
 }

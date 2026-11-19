@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Arc 1.171's theme editor (SpaceStyleEditor), which Edit Theme Color… opens beside the
 /// sidebar and the Edit Space sheet shows inline. Measured from 2x captures of an offline Arc
@@ -35,7 +36,7 @@ struct SpaceStyleEditor: View {
     private var lightCard: Bool { SpaceTheme.isLight(pad.appearance, systemDark: SystemAppearance.shared.isDark) }
     @State private var swatchPage: Int
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             ColorPad(pad: $pad)
                 .frame(width: 340, height: 340)
@@ -44,7 +45,7 @@ struct SpaceStyleEditor: View {
                 pageArrow("chevron.left", to: swatchPage - 1, label: "Move to previous preset page.")
                 HStack(spacing: 5.5) {
                     let page = SpaceColorPresets.pages[swatchPage]
-                    ForEach(Array(page.swatches.enumerated()), id: \.offset) { i, colors in
+                    ForEach(Array(page.swatches.enumerated()), id: \.offset) { i, colors in WithPerceptionTracking {
                         Button { pad.key = colors } label: {
                             Circle()
                                 .fill(LinearGradient(colors: colors.map { Color(hex: $0) }, startPoint: .topLeading, endPoint: .bottomTrailing))
@@ -54,7 +55,7 @@ struct SpaceStyleEditor: View {
                         .buttonStyle(ColorPillButtonStyle())
                         // Arc: "Set space color to Catalog color: … ColorPickerBrandN".
                         .accessibilityLabel("Set space color to \(page.name(i))")
-                    }
+                    } }
                 }
                 pageArrow("chevron.right", to: swatchPage + 1, label: "Move to next preset page.")
             }
@@ -88,7 +89,7 @@ struct SpaceStyleEditor: View {
             theme = SpaceThemeVariants.theme(key: p.key, intensity: p.intensity, noise: p.noise, appearance: p.appearance)
             onChange(theme)
         }
-    }
+    } }
 
     private func pageArrow(_ symbol: String, to page: Int, label: String) -> some View {
         let ok = SpaceColorPresets.pages.indices.contains(page)
@@ -111,7 +112,7 @@ private struct PageArrow: View {
     @State private var isHovered = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let hot = enabled && isHovered
         Image(systemName: symbol).font(.system(size: 15, weight: .medium)).frame(width: 36, height: 30)
             .contentShape(Rectangle())
@@ -124,7 +125,7 @@ private struct PageArrow: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel(label)
             .accessibilityAction { if enabled { action() } }
-    }
+    } }
 }
 
 /// What the editor's controls set (Arc: SpaceStyleEditor.State's colours, factors and darkModeBiasSetting).
@@ -148,8 +149,8 @@ private struct ColorPad: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private static let reach: CGFloat = 153
 
-    var body: some View {
-        GeometryReader { geo in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { geo in WithPerceptionTracking {
             let size = geo.size
             let centre = CGPoint(x: size.width / 2, y: size.height / 2)
             ZStack {
@@ -171,7 +172,7 @@ private struct ColorPad: View {
                         .foregroundStyle(ink.opacity(0.85))
                         .allowsHitTesting(false)
                 }
-                ForEach(Array(pad.key.prefix(3).enumerated()), id: \.offset) { i, hex in
+                ForEach(Array(pad.key.prefix(3).enumerated()), id: \.offset) { i, hex in WithPerceptionTracking {
                     let main = i == 0
                     Circle()
                         .fill(Color(hex: hex))
@@ -197,7 +198,7 @@ private struct ColorPad: View {
                                 place(handle: i, at: g.location, centre: centre)
                             }
                             .onEnded { _ in draggingKnob = nil })
-                }
+                } }
                 VStack {
                     AppearanceToggles(appearance: $pad.appearance).padding(.top, 24)
                     Spacer()
@@ -209,8 +210,8 @@ private struct ColorPad: View {
                     .padding(.bottom, 20)
                 }
             }
-        }
-    }
+        } }
+    } }
 
     private func padButton(_ symbol: String, label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -252,13 +253,13 @@ private struct AppearanceToggles: View {
     @Environment(\.editorInk) private var ink
     @Binding var appearance: String
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 7.5) {
             toggle("auto", symbol: "sparkles")
             toggle("light", symbol: "sun.max.fill")
             toggle("dark", symbol: "moon.stars.fill")
         }
-    }
+    } }
 
     private func toggle(_ value: String, symbol: String) -> some View {
         Button { appearance = value } label: {
@@ -278,8 +279,8 @@ private struct WaveSlider: View {
     @Environment(\.editorInk) private var ink
     @Binding var value: Double
 
-    var body: some View {
-        GeometryReader { geo in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { geo in WithPerceptionTracking {
             let w = geo.size.width, h = geo.size.height
             let x = 8 + (w - 16) * CGFloat(value)
             let wave = Path { p in
@@ -299,8 +300,8 @@ private struct WaveSlider: View {
             }
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0).onChanged { g in value = min(max((g.location.x - 8) / (w - 16), 0), 1) })
-        }
-    }
+        } }
+    } }
 }
 
 /// The grain: a dark disc showing it, a ring of dots lit from twelve o'clock round to a white knob;
@@ -310,18 +311,18 @@ private struct GrainDial: View {
     @Binding var value: Double
     private let count = 24
 
-    var body: some View {
-        GeometryReader { geo in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { geo in WithPerceptionTracking {
             let c = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
             let knob = value * 2 * .pi - .pi / 2
             ZStack {
-                ForEach(0..<count, id: \.self) { i in
+                ForEach(0..<count, id: \.self) { i in WithPerceptionTracking {
                     let a = Double(i) / Double(count) * 2 * .pi - .pi / 2
                     Circle()
                         .fill(ink.opacity(Double(i) / Double(count) <= value ? 0.55 : 0.18))
                         .frame(width: 3.5, height: 3.5)
                         .position(x: c.x + 34 * cos(a), y: c.y + 34 * sin(a))
-                }
+                } }
                 Circle().fill(.black.opacity(0.12)).overlay(NoiseDisc(amount: value)).clipShape(Circle())
                     .overlay(Circle().strokeBorder(ink.opacity(0.12), lineWidth: 1))
                     .frame(width: 41, height: 41)
@@ -335,16 +336,16 @@ private struct GrainDial: View {
                 if a < 0 { a += 2 * .pi }
                 value = a / (2 * .pi)
             })
-        }
-    }
+        } }
+    } }
 }
 
 /// The dial's face: the theme's grain texture at the chosen strength.
 private struct NoiseDisc: View {
     let amount: Double
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Rectangle().fill(ImagePaint(image: Image(nsImage: NoiseTexture.image), scale: 0.5)).opacity(0.15 + 0.6 * amount)
-    }
+    } }
 }
 
 /// Arc's ColorPillButtonStyle for the preset swatches: a circle grows a little under the pointer and
@@ -356,13 +357,13 @@ struct ColorPillButtonStyle: ButtonStyle {
     @State private var isHovered = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    func makeBody(configuration: Configuration) -> some View {
+    func makeBody(configuration: Configuration) -> some View { WithPerceptionTracking {
         configuration.label
             .scaleEffect(configuration.isPressed ? Self.pressed : isHovered ? Self.hovered : 1)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: isHovered)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.10), value: configuration.isPressed)
             .onHover { isHovered = $0 }
-    }
+    } }
 }
 
 /// Arc's SpaceStyleButtonStyle (paging arrows, − / +, Auto / Light / Dark): white at `opacity`,
@@ -375,13 +376,13 @@ struct SpaceStyleButtonStyle: ButtonStyle {
 
     @Environment(\.editorInk) private var ink
 
-    func makeBody(configuration: Configuration) -> some View {
+    func makeBody(configuration: Configuration) -> some View { WithPerceptionTracking {
         let hot = enabled && isHovered
         return configuration.label
             .foregroundStyle(ink.opacity(hot ? min(1, opacity + 0.3) : opacity))
             .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: hot)
             .onHover { isHovered = $0 }
-    }
+    } }
 }
 
 /// The pointer Arc shows over the editor: a pointing hand on a paging arrow, an open hand over a

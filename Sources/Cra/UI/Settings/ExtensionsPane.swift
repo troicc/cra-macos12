@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Installed unpacked extensions in Dia's card idiom, with the add/manage buttons under the
 /// card the way Dia places "Advanced Settings" under its Privacy card, then the Live Folder plugins.
@@ -9,7 +10,7 @@ struct ExtensionsPane: View {
     @State private var extensions = ExtensionStore()
     @State private var error: String?
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         SettingsCardPane {
             SettingsHeader("Installed extensions")
             SettingsCard {
@@ -20,7 +21,7 @@ struct ExtensionsPane: View {
                             .fixedSize(horizontal: false, vertical: true)
                     } trailing: { EmptyView() }
                 }
-                ForEach(Array(extensions.entries.enumerated()), id: \.element.id) { i, e in
+                ForEach(Array(extensions.entries.enumerated()), id: \.element.id) { i, e in WithPerceptionTracking {
                     if i > 0 { SettingsCardDivider() }
                     SettingsCardRow {
                         VStack(alignment: .leading, spacing: 2) {
@@ -36,7 +37,7 @@ struct ExtensionsPane: View {
                             Button("Remove") { extensions.remove(e) }
                         }
                     }
-                }
+                } }
             }
             HStack {
                 Button("Add Unpacked Extension…") { addExtension() }
@@ -52,7 +53,7 @@ struct ExtensionsPane: View {
             // Live Folder plugins have no Arc tab either: they sit under the extensions.
             PluginsPane().settingsNested().padding(.top, 20)
         }
-    }
+    } }
 
     private func addExtension() {
         let panel = NSOpenPanel()

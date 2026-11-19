@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Arc's hover tips for small controls (ArcTooltip, PresentationBehavior.onMouseIdle).
 /// Measured on Arc 1.170's sidebar row buttons (27 Oct 2026, 1x screen recordings): the tip
@@ -340,7 +341,7 @@ private struct ArcTooltipModifier: ViewModifier {
     let onShow: (() -> Void)?
     @State private var source = ArcTooltipSource()
 
-    func body(content: Content) -> some View {
+    func body(content: Content) -> some View { WithPerceptionTracking {
         let base = content
             .compatOnGeometryChange(for: CGSize.self) { $0.size } action: { source.size = $0 }
         Group {
@@ -383,7 +384,7 @@ private struct ArcTooltipModifier: ViewModifier {
         }
         // Row buttons vanish when the row loses hover; their tip goes with them.
         .onDisappear { ArcTooltipController.shared.mouseExited(source) }
-    }
+    } }
 }
 
 extension View {

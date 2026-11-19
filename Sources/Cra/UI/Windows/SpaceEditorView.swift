@@ -1,4 +1,5 @@
 import SwiftUI
+import Perception
 
 /// The profile picked for a space: Default (nil), an existing one, or a new one to make.
 enum SpaceProfileChoice: Hashable {
@@ -58,7 +59,7 @@ struct SpaceEditorView: View {
         _theme = State(initialValue: existing?.theme ?? SpaceColorPresets.newSpaceTheme())
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 16) {
             Text(existing == nil ? "New Space" : "Edit Space").font(.system(size: 16, weight: .semibold))
             HStack(alignment: .top, spacing: 16) {
@@ -70,11 +71,11 @@ struct SpaceEditorView: View {
                             .onChange(of: title) { value in title = Space.limitedTitle(value) }
                     }
                     LazyVGrid(columns: Array(repeating: GridItem(.fixed(28), spacing: 4), count: 8), spacing: 4) {
-                        ForEach(Self.emojis, id: \.self) { e in
+                        ForEach(Self.emojis, id: \.self) { e in WithPerceptionTracking {
                             Text(e).font(.system(size: 16)).frame(width: 28, height: 28)
                                 .background(RoundedRectangle(cornerRadius: 6).fill(icon == .emoji(e) ? Color.accentColor.opacity(0.25) : .clear))
                                 .onTapGesture { icon = .emoji(e) }
-                        }
+                        } }
                     }
                     Divider()
                     profileSection
@@ -99,7 +100,7 @@ struct SpaceEditorView: View {
         }
         .padding(20)
         .frame(width: 651)
-    }
+    } }
 
     /// The space as the sidebar draws it, with the theme being edited.
     private var preview: some View {
@@ -168,7 +169,7 @@ struct SpaceEditorView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Picker("Profile", selection: $profile) {
                     Text("Default").tag(SpaceProfileChoice.existing(nil))
-                    ForEach(profiles) { p in Text(p.name).tag(SpaceProfileChoice.existing(p.id)) }
+                    ForEach(profiles) { p in WithPerceptionTracking { Text(p.name).tag(SpaceProfileChoice.existing(p.id)) } }
                     Divider()
                     Text("New Profile…").tag(SpaceProfileChoice.new)
                 }
@@ -188,7 +189,7 @@ struct SpaceEditorView: View {
             Picker("Search Engine", selection: $searchEngine) {
                 Text("Default (\(defaultEngineName))").tag("")
                 Divider()
-                ForEach(searchEngines, id: \.keyword) { e in Text(e.name).tag(e.keyword) }
+                ForEach(searchEngines, id: \.keyword) { e in WithPerceptionTracking { Text(e.name).tag(e.keyword) } }
             }
             Text("Searches from the command bar in this space go here. Default follows Settings.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)

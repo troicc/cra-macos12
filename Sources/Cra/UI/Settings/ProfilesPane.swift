@@ -15,7 +15,7 @@ struct ProfilesPane: View {
     /// The profile on the right; nil is Default.
     @State private var selected: UUID?
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         @Perception.Bindable var store = store
         let current = store.profiles.contains { $0.id == selected } ? selected : nil
         VStack(alignment: .leading, spacing: 20) {
@@ -33,7 +33,7 @@ struct ProfilesPane: View {
         .padding(.horizontal, SettingsMetrics.paneInset)
         .padding(.top, SettingsMetrics.paneTop)
         .padding(.bottom, SettingsMetrics.paneBottom)
-    }
+    } }
 
     // MARK: List
 
@@ -151,10 +151,10 @@ struct ProfilesPane: View {
 
             SettingsHeader("Your Data and Settings").padding(.top, 14)
             SettingsCard {
-                ForEach(Array(Self.dataPages.enumerated()), id: \.offset) { i, page in
+                ForEach(Array(Self.dataPages.enumerated()), id: \.offset) { i, page in WithPerceptionTracking {
                     if i > 0 { SettingsCardDivider() }
                     dataRow(page, profileID: profileID)
-                }
+                } }
             }
             if profileID == nil, ArcProfileRebuilder.isAvailable {
                 // Spaces an Arc import left on Default, back on their Arc profiles (#131).

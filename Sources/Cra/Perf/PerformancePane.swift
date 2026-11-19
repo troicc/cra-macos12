@@ -15,7 +15,7 @@ struct PerformancePane: View {
 
     enum Section: String, CaseIterable { case overview = "Overview", events = "Events", export = "Export" }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         @Perception.Bindable var store = store
         SettingsCardPane {
             Picker("", selection: $section) { ForEach(Section.allCases, id: \.self) { Text($0.rawValue).tag($0) } }
@@ -36,7 +36,7 @@ struct PerformancePane: View {
                 try? await Task.compatSleep(seconds: 2)
             }
         }
-    }
+    } }
 
     private struct RefreshKey: Equatable { var open: Bool; var recording: Bool }
 
@@ -54,7 +54,7 @@ struct PerformancePane: View {
             if !r.insights.isEmpty {
                 SettingsHeader("Findings").padding(.top, 20)
                 SettingsCard {
-                    ForEach(Array(r.insights.enumerated()), id: \.element.id) { i, insight in
+                    ForEach(Array(r.insights.enumerated()), id: \.element.id) { i, insight in WithPerceptionTracking {
                         if i > 0 { SettingsCardDivider() }
                         SettingsCardRow {
                             HStack(alignment: .top, spacing: 8) {
@@ -67,7 +67,7 @@ struct PerformancePane: View {
                                 }
                             }
                         } trailing: { EmptyView() }
-                    }
+                    } }
                 }
             }
             let m = r.mainThread
@@ -121,14 +121,14 @@ struct PerformancePane: View {
         if !rows.isEmpty {
             SettingsHeader(title).padding(.top, 20)
             SettingsCard {
-                ForEach(Array(rows.enumerated()), id: \.offset) { i, row in
+                ForEach(Array(rows.enumerated()), id: \.offset) { i, row in WithPerceptionTracking {
                     if i > 0 { SettingsCardDivider() }
                     SettingsCardRow {
                         Text(row.0).font(.system(size: 13))
                     } trailing: {
                         Text(row.1).font(.system(size: 13).monospacedDigit()).foregroundStyle(.secondary)
                     }
-                }
+                } }
             }
         }
     }
@@ -141,7 +141,7 @@ struct PerformancePane: View {
             SettingsFootnote(report == nil ? "Recording is off." : "Nothing has happened this session: no stalls, crashed pages or failed loads.")
         } else {
             SettingsCard {
-                ForEach(Array(list.prefix(100).enumerated()), id: \.offset) { i, e in
+                ForEach(Array(list.prefix(100).enumerated()), id: \.offset) { i, e in WithPerceptionTracking {
                     if i > 0 { SettingsCardDivider() }
                     SettingsCardRow {
                         VStack(alignment: .leading, spacing: 2) {
@@ -153,7 +153,7 @@ struct PerformancePane: View {
                     } trailing: {
                         Text(e.time).font(.system(size: 11).monospacedDigit()).foregroundStyle(.secondary)
                     }
-                }
+                } }
             }
         }
     }

@@ -1,4 +1,5 @@
 import SwiftUI
+import Perception
 
 /// Arc's Filter panel on Library ▸ Archived Tabs and Downloads (Arc 1.172.1, 8 Nov 2026, 2x stills):
 /// it takes the search row's place: the title ("Filter Archived Tabs", 15 pt semibold, 12 pt in) and
@@ -28,7 +29,7 @@ struct LibraryFilterPanel: View {
 
     private var ink: Color { dark ? .white : .black }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text(title).font(.system(size: 15, weight: .semibold)).foregroundStyle(ink.opacity(0.78))
@@ -43,7 +44,7 @@ struct LibraryFilterPanel: View {
             }
             .frame(height: 36)
             .padding(.top, 10)
-            ForEach(sections) { s in
+            ForEach(sections) { s in WithPerceptionTracking {
                 Text(s.title).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(ink.opacity(0.55))
                     .padding(.top, 16).padding(.bottom, 7)
                 if #available(macOS 13.0, *) {
@@ -55,16 +56,16 @@ struct LibraryFilterPanel: View {
                         chipsView(s.chips)
                     }
                 }
-            }
+            } }
         }
         .padding(.leading, 12).padding(.trailing, 8).padding(.bottom, 4)
         .frame(width: width, alignment: .leading)
         .fixedSize(horizontal: false, vertical: true)
-    }
+    } }
 
     @ViewBuilder
     private func chipsView(_ chips: [Chip]) -> some View {
-        ForEach(chips) { c in
+        ForEach(chips) { c in WithPerceptionTracking {
             Button { toggle(c.id) } label: {
                 HStack(spacing: 5) {
                     if let icon = c.icon { Text(icon).font(.system(size: 13)) }
@@ -77,7 +78,7 @@ struct LibraryFilterPanel: View {
             }
             .buttonStyle(.plain)
             .accessibilityAddTraits(c.on ? [.isButton, .isSelected] : .isButton)
-        }
+        } }
     }
 }
 

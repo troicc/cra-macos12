@@ -273,7 +273,7 @@ private enum BoostStyle {
 private struct BoostEditorView: View {
     @Perception.Bindable var model: BoostEditorModel
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             header
             Divider().opacity(0.4)
@@ -286,7 +286,7 @@ private struct BoostEditorView: View {
         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(BoostStyle.panel))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .environment(\.colorScheme, .light)
-    }
+    } }
 
     /// The code panel's header is only Back and the CSS / JS switch, centred (Arc 1.172.1).
     @ViewBuilder private var header: some View {
@@ -356,7 +356,7 @@ private struct BoostEditorView: View {
             HStack(spacing: 10) {
                 square("lightbulb", on: model.boost.invert, help: "Invert lightness") { model.change { $0.invert.toggle() } }
                 square("slider.horizontal.3", on: model.showingColors, help: "Advanced color controls") { model.showingColors.toggle() }
-                    .popover(isPresented: $model.showingColors, arrowEdge: .bottom) { advanced }
+                    .popover(isPresented: $model.showingColors, arrowEdge: .bottom) { WithPerceptionTracking { advanced } }
                 square("nosign", on: false, help: "Reset to original colors") {
                     model.change { $0.hue = 0; $0.strength = 0; $0.invert = false; $0.contrast = 50; $0.brightness = 50; $0.saturation = 50 }
                 }
@@ -365,13 +365,13 @@ private struct BoostEditorView: View {
             fonts
             HStack(spacing: 9) {
                 Menu {
-                    ForEach([0.8, 0.9, 1, 1.1, 1.25, 1.5], id: \.self) { s in
+                    ForEach([0.8, 0.9, 1, 1.1, 1.25, 1.5], id: \.self) { s in WithPerceptionTracking {
                         Button(s == 1 ? "Original" : "\(Int(s * 100)) %") { model.change { $0.textScale = s } }
-                    }
+                    } }
                 } label: { wide("Size", trailing: nil) }
                 .compatMenuButtonStyle().buttonStyle(.plain).menuIndicator(.hidden).help("Change text size")
                 Menu {
-                    ForEach(Boost.TextCase.allCases, id: \.self) { c in Button(c.title) { model.change { $0.textCase = c } } }
+                    ForEach(Boost.TextCase.allCases, id: \.self) { c in WithPerceptionTracking { Button(c.title) { model.change { $0.textCase = c } } } }
                 } label: { wide("Case", trailing: nil) }
                 .compatMenuButtonStyle().buttonStyle(.plain).menuIndicator(.hidden).help("Change text case")
             }
@@ -413,12 +413,12 @@ private struct BoostEditorView: View {
     private var fonts: some View {
         let columns = Array(repeating: GridItem(.fixed(26), spacing: 1.5), count: 5)
         return LazyVGrid(columns: columns, spacing: 0) {
-            ForEach(Boost.fonts.indices, id: \.self) { i in
+            ForEach(Boost.fonts.indices, id: \.self) { i in WithPerceptionTracking {
                 Button { model.change { $0.font = $0.font == i ? nil : i } } label: {
                     BoostFontCell(index: i, selected: model.boost.font == i)
                 }
                 .buttonStyle(.plain)
-            }
+            } }
         }
         .padding(.vertical, 8).padding(.horizontal, 5)
         .frame(width: 147)
@@ -500,13 +500,13 @@ struct BoostFontCell: View {
     let index: Int
     var selected = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         // The glyphs' own outline is centred, not the font's line box: Rockwell, Snell Roundhand
         // and the others with tall ascenders or deep descenders sat up to 2 pt off (#478).
         Image(nsImage: Self.glyphs[index]).renderingMode(.template)
             .foregroundStyle(selected ? Color.accentColor : BoostStyle.secondary)
             .frame(width: 26, height: 26)
-    }
+    } }
 
     /// "Aa" in each of the editor's fonts, cropped to its ink.
     private static let glyphs: [NSImage] = Boost.fonts.map { image(font(css: $0)) }
@@ -578,8 +578,8 @@ private struct ColorWheel: View {
 
     private func color(_ c: BoostWheel.HSB) -> Color { Color(hue: c.hue, saturation: c.saturation, brightness: c.brightness) }
 
-    var body: some View {
-        GeometryReader { geo in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { geo in WithPerceptionTracking {
             let c = geo.size.width / 2
             let h = BoostWheel.handles(hue: hue, strength: strength)
             let big = CGPoint(x: c + h.big.x, y: c + h.big.y), small = CGPoint(x: c + h.small.x, y: c + h.small.y)
@@ -620,8 +620,8 @@ private struct ColorWheel: View {
                 let picked = BoostWheel.pick(CGPoint(x: g.location.x - c, y: g.location.y - c))
                 set(picked.hue, picked.strength)
             })
-        }
-    }
+        } }
+    } }
 }
 
 /// The Code panel's editor: dark, monospaced, no smart quotes.

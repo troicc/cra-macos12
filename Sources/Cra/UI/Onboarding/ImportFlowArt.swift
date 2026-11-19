@@ -1,4 +1,5 @@
 import SwiftUI
+import Perception
 
 // The right-hand panel of the import window. Dia paints these as artwork
 // (Rebrand*Screenshot in BoostBrowser_Unboxing) with a live sidebar preview
@@ -10,7 +11,7 @@ struct ImportArtPanel: View {
     let model: ImportFlowModel
     let colors: ImportColors
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         // Dia paints the default browser step warm (RebrandDefaultBrowserScreenshot).
         let theme = model.step == .defaultBrowser
             ? SpaceTheme(colors: colors.dark ? ["#8A5038", "#5C2A1C"] : ["#E2A585", "#F1D9C8"], intensity: 1, noise: 0.2, appearance: colors.dark ? "dark" : "light")
@@ -75,7 +76,7 @@ struct ImportArtPanel: View {
                                      .init(color: .black, location: 0.3)], startPoint: .leading, endPoint: .trailing))
         .clipped()
         .animation(.easeInOut(duration: 0.45), value: theme)
-    }
+    } }
 
     /// Dia's badge glyphs are a pale blue (#A7D3E8); a space's accent replaces it.
     private func accent(_ t: SpaceTheme?) -> Color {
@@ -88,7 +89,7 @@ struct ImportArtPanel: View {
 private struct ArtBackdrop: View {
     let theme: SpaceTheme
     let dark: Bool
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let c0 = Color(hex: theme.colors.first ?? "#C4D3E2")
         let c1 = Color(hex: theme.colors.count > 1 ? theme.colors[1] : (theme.colors.first ?? "#DCE6F0"))
         let base: Color = dark ? Color(white: 0.06) : Color(white: 0.93)
@@ -101,7 +102,7 @@ private struct ArtBackdrop: View {
                 .opacity(dark ? 0.08 : 0.07).blendMode(dark ? .screen : .multiply)
         }
         .frame(width: 477, height: 544)
-    }
+    } }
 }
 
 // MARK: - Dock
@@ -113,7 +114,7 @@ private struct DockArt: View {
     let model: ImportFlowModel
     let colors: ImportColors
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let system = model.system
         let docked = system.isInDock || model.addToDock
         let glass = Color.white.opacity(colors.dark ? 0.16 : 0.32)
@@ -144,7 +145,7 @@ private struct DockArt: View {
         }
         .frame(width: 477, height: 544, alignment: .topLeading)
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: docked)
-    }
+    } }
 
     /// ImportSourceList.dockNeighbours over the browsers installed here.
     private static func neighbours(defaultBrowser: URL?) -> (left: String?, right: String?) {
@@ -164,7 +165,7 @@ private struct DockArt: View {
 private struct NeighbourTile: View {
     let icon: NSImage?
     let dark: Bool
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
         ZStack {
             if let icon {
@@ -177,26 +178,26 @@ private struct NeighbourTile: View {
             }
         }
         .frame(width: 106, height: 106)
-    }
+    } }
 }
 
 /// The unlock and passwords steps: a key over the same two rings as the badge ring.
 private struct KeyArt: View {
     let colors: ImportColors
     let accent: Color
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack {
-            ForEach([118.0, 140.0], id: \.self) { r in
+            ForEach([118.0, 140.0], id: \.self) { r in WithPerceptionTracking {
                 Circle().strokeBorder(colors.ink.opacity(colors.dark ? 0.14 : 0.18), lineWidth: 1)
                     .frame(width: r * 2 * (477 / 448), height: r * 2 * (477 / 448))
-            }
+            } }
             Circle().fill(colors.dark ? Color(white: 0.13) : Color(white: 0.97))
                 .frame(width: 132, height: 132)
                 .shadow(color: .black.opacity(colors.dark ? 0.4 : 0.14), radius: 16, y: 6)
             Image(systemName: "key.fill").font(.system(size: 58, weight: .regular)).foregroundStyle(accent)
         }
         .frame(width: 477, height: 544)
-    }
+    } }
 }
 
 // MARK: - Badge ring
@@ -217,24 +218,24 @@ private struct BadgeRing: View {
         ("archive", "archivebox.fill", 288, 434, 34),
     ]
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let s = Self.scale
         ZStack(alignment: .topLeading) {
-            ForEach([118.0, 140.0], id: \.self) { r in
+            ForEach([118.0, 140.0], id: \.self) { r in WithPerceptionTracking {
                 Circle().strokeBorder(colors.ink.opacity(colors.dark ? 0.14 : 0.18), lineWidth: 1)
                     .frame(width: r * 2 * s, height: r * 2 * s)
                     .position(x: 263 * s, y: 272)
-            }
+            } }
             BrandMark(size: 132)
                 .shadow(color: .black.opacity(0.18), radius: 18, y: 6)
                 .position(x: 263 * s, y: 272)
-            ForEach(Self.badges, id: \.id) { b in
+            ForEach(Self.badges, id: \.id) { b in WithPerceptionTracking {
                 Badge(symbol: b.symbol, radius: b.r * s, state: state(b.id), colors: colors, accent: accent)
                     .position(x: b.x * s, y: b.y)
-            }
+            } }
         }
         .frame(width: 477, height: 544, alignment: .topLeading)
-    }
+    } }
 
     private func state(_ id: String) -> ImportCategory.State? {
         guard model.step == .progress else { return nil }
@@ -250,7 +251,7 @@ private struct Badge: View {
     let colors: ImportColors
     let accent: Color
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let lit = state == nil || state == .done || state == .working
         ZStack(alignment: .bottomTrailing) {
             ZStack {
@@ -270,7 +271,7 @@ private struct Badge: View {
         .opacity(lit ? 1 : 0.4)
         .scaleEffect(state == .working ? 1.08 : 1)
         .animation(.spring(response: 0.35, dampingFraction: 0.7), value: state)
-    }
+    } }
 }
 
 // MARK: - Window mock
@@ -288,7 +289,7 @@ private struct WindowMock<Sidebar: View, Pane: View>: View {
     @ViewBuilder let sidebar: () -> Sidebar
     @ViewBuilder let pane: () -> Pane
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
         let palette = theme.palette
         ZStack(alignment: .topLeading) {
@@ -327,7 +328,7 @@ private struct WindowMock<Sidebar: View, Pane: View>: View {
         .shadow(color: .black.opacity(colors.dark ? 0.5 : 0.18), radius: 24, y: 10)
         .offset(x: origin.x, y: origin.y)
         .environment(\.colorScheme, palette.isDark ? .dark : .light)
-    }
+    } }
 }
 
 /// Dia's DiaSidebarPreviewView: favourites grid, space name, pinned tabs and
@@ -336,7 +337,7 @@ private struct SidebarPreview: View {
     let model: ImportFlowModel
     let theme: SpaceTheme
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let p = theme.palette
         if let plan = model.plan, let i = model.previewSpace, i < plan.spaces.count {
             let space = plan.spaces[i]
@@ -344,11 +345,11 @@ private struct SidebarPreview: View {
             VStack(alignment: .leading, spacing: 10) {
                 if !favorites.isEmpty {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 7), count: 4), spacing: 7) {
-                        ForEach(Array(favorites.enumerated()), id: \.offset) { _, f in
+                        ForEach(Array(favorites.enumerated()), id: \.offset) { _, f in WithPerceptionTracking {
                             RoundedRectangle(cornerRadius: 10, style: .continuous).fill(p.pillFill)
                                 .frame(height: 40)
                                 .overlay(Favicon(image: model.favicon(for: f), size: 17, palette: p))
-                        }
+                        } }
                     }
                 }
                 HStack(spacing: 6) {
@@ -361,28 +362,28 @@ private struct SidebarPreview: View {
                 }
                 .padding(.leading, 4)
                 VStack(alignment: .leading, spacing: 1) {
-                    ForEach(Array(space.pinned.prefix(9).enumerated()), id: \.offset) { _, item in
+                    ForEach(Array(space.pinned.prefix(9).enumerated()), id: \.offset) { _, item in WithPerceptionTracking {
                         PreviewRow(item: item, model: model, palette: p)
-                    }
+                    } }
                     if !space.today.isEmpty {
                         Rectangle().fill(p.separator).frame(height: 1).padding(.vertical, 6).padding(.horizontal, 6)
-                        ForEach(Array(space.today.prefix(4).enumerated()), id: \.offset) { _, item in
+                        ForEach(Array(space.today.prefix(4).enumerated()), id: \.offset) { _, item in WithPerceptionTracking {
                             PreviewRow(item: item, model: model, palette: p)
-                        }
+                        } }
                     }
                 }
             }
             .padding(.horizontal, 12)
             .opacity(model.selectedSpaces.contains(i) ? 1 : 0.35)
         }
-    }
+    } }
 }
 
 private struct PreviewRow: View {
     let item: ImportedItem
     let model: ImportFlowModel
     let palette: SpacePalette
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 9) {
             if item.isFolder {
                 Image(systemName: "folder.fill").font(.system(size: 13)).foregroundStyle(palette.folderTint).frame(width: 16)
@@ -397,38 +398,38 @@ private struct PreviewRow: View {
         }
         .padding(.horizontal, 8)
         .frame(height: 30)
-    }
+    } }
 }
 
 private struct Favicon: View {
     let image: NSImage?
     let size: CGFloat
     let palette: SpacePalette
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         if let image {
             Image(nsImage: image).resizable().interpolation(.high).frame(width: size, height: size)
                 .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
         } else {
             Image(systemName: "globe").font(.system(size: size * 0.8)).foregroundStyle(palette.textTertiary).frame(width: size, height: size)
         }
-    }
+    } }
 }
 
 private struct PlaceholderSidebar: View {
     let theme: SpaceTheme
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let p = theme.palette
         VStack(alignment: .leading, spacing: 12) {
-            ForEach([0.7, 0.5, 0.82, 0.6, 0.44], id: \.self) { w in
+            ForEach([0.7, 0.5, 0.82, 0.6, 0.44], id: \.self) { w in WithPerceptionTracking {
                 HStack(spacing: 9) {
                     RoundedRectangle(cornerRadius: 4).fill(p.textTertiary.opacity(0.5)).frame(width: 16, height: 16)
                     Capsule().fill(p.textTertiary.opacity(0.35)).frame(width: 70 * w, height: 8)
                 }
-            }
+            } }
         }
         .padding(.horizontal, 16)
         .padding(.top, 8)
-    }
+    } }
 }
 
 /// The address bar of the personalization preview: Arc's second sidebar row
@@ -436,7 +437,7 @@ private struct PlaceholderSidebar: View {
 private struct AddressPreview: View {
     let theme: SpaceTheme
     let inSidebar: Bool
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let p = theme.palette
         if inSidebar {
             // Arc's toolbar-hidden URL pill: the sidebar's width less 8 pt a side, the bare host.
@@ -460,7 +461,7 @@ private struct AddressPreview: View {
                 Rectangle().fill(ink.opacity(0.08)).frame(height: 1)
             }
         }
-    }
+    } }
 
     private func navButtons(_ p: SpacePalette, ink: Color? = nil) -> some View {
         HStack(spacing: 7) {
@@ -476,7 +477,7 @@ private struct AddressPreview: View {
 private struct ExtensionsPreview: View {
     let model: ImportFlowModel
     let colors: ImportColors
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let picked = model.extensions.filter { model.selectedExtensions.contains($0.id) }
         let fill = colors.dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)
         VStack(alignment: .leading, spacing: 18) {
@@ -489,16 +490,16 @@ private struct ExtensionsPreview: View {
             .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(fill))
             .animation(.easeOut(duration: 0.2), value: model.selectedExtensions)
             LazyVGrid(columns: Array(repeating: GridItem(.fixed(58), spacing: 12), count: 3), alignment: .leading, spacing: 12) {
-                ForEach(picked.prefix(9)) { e in
+                ForEach(picked.prefix(9)) { e in WithPerceptionTracking {
                     RoundedRectangle(cornerRadius: 14, style: .continuous).fill(fill)
                         .frame(width: 58, height: 58)
                         .overlay(ExtensionIcon(image: e.icon, size: 30, c: colors))
                         .transition(.scale(scale: 0.8).combined(with: .opacity))
-                }
+                } }
             }
             .animation(.spring(response: 0.3, dampingFraction: 0.8), value: model.selectedExtensions)
         }
         .padding(.top, 14)
         .padding(.leading, 16)
-    }
+    } }
 }

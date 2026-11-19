@@ -1,4 +1,5 @@
 import SwiftUI
+import Perception
 
 enum SidebarSection { case favorites, pinned, today }
 
@@ -10,7 +11,7 @@ struct FaviconView: View {
     var onDark: Bool?
     @Environment(\.compatFavicons) private var favicons
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         if let img = favicons.image(forKey: key) {
             // One-color glyphs (GitHub) flip to white on dark fills and black on light ones.
             let dark = onDark ?? palette.isDark
@@ -29,5 +30,5 @@ struct FaviconView: View {
                 .foregroundStyle(palette.textTertiary)
                 .frame(width: size, height: size)
         }
-    }
+    } }
 }

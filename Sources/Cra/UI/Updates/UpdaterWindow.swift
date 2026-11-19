@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Arc's UpdaterWindowController: a small window without a title that opens for Check for
 /// Updates… Measured on Arc 1.170 in its up-to-date state (window capture and AX tree, 26 Oct):
@@ -45,7 +46,7 @@ struct UpdaterWindowView: View {
         return "\(info?["CFBundleShortVersionString"] as? String ?? "") (\(info?["CFBundleVersion"] as? String ?? ""))"
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
@@ -66,7 +67,7 @@ struct UpdaterWindowView: View {
         .frame(width: 270)
         .fixedSize(horizontal: false, vertical: true)
         .padding(.bottom, 38)
-    }
+    } }
 
     private var title: String {
         if case .found(let r, _) = updater.phase { return "Cra \(r.version)" }
@@ -148,21 +149,21 @@ private struct UpdaterButton: View {
     let title: String
     let action: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(title, action: action)
             .buttonStyle(UpdaterButtonStyle())
             .accessibilityLabel(title)
             .clickTarget(title)
             .keyboardShortcut(.defaultAction)
             .padding(.top, 19)
-    }
+    } }
 }
 
 /// Arc's UpdaterButtonBackgroundColor with a faint shadow; the label is white ≈80% in dark mode.
 private struct UpdaterButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
 
-    func makeBody(configuration: Configuration) -> some View {
+    func makeBody(configuration: Configuration) -> some View { WithPerceptionTracking {
         let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
         configuration.label
             .font(.system(size: 13, weight: .bold))
@@ -171,7 +172,7 @@ private struct UpdaterButtonStyle: ButtonStyle {
             .background(shape.fill(Color(nsColor: .updaterButton)).shadow(color: .black.opacity(0.1), radius: 5))
             .contentShape(shape)
             .opacity(configuration.isPressed ? 0.75 : 1)
-    }
+    } }
 }
 
 /// Arc: "remind me to download and install the update later".
@@ -179,7 +180,7 @@ private struct LaterButton: View {
     let title: String
     let action: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(title, action: action)
             .buttonStyle(.plain)
             .font(.system(size: 13))
@@ -187,7 +188,7 @@ private struct LaterButton: View {
             .keyboardShortcut(.cancelAction)
             .padding(.top, 12)
             .padding(.bottom, -12)
-    }
+    } }
 }
 
 /// Arc's ReleaseNotesView: the appcast item's HTML with Arc's style (-apple-system 12px,
@@ -195,7 +196,7 @@ private struct LaterButton: View {
 private struct ReleaseNotesView: View {
     let html: String
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ScrollView {
             Text(Self.render(html))
                 .textSelection(.enabled)
@@ -204,7 +205,7 @@ private struct ReleaseNotesView: View {
         }
         .frame(width: 230, height: 150)
         .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.primary.opacity(0.05)))
-    }
+    } }
 
     private static func render(_ html: String) -> AttributedString {
         let dark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua

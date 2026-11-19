@@ -163,7 +163,7 @@ private struct AppDialogView: View {
     @Perception.Bindable var dialog: AppDialog
     @FocusState private var inputFocused: Bool
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) {
             DialogScrollContent(width: dialog.width - 2 * dialog.inset, maximumHeight: max(140, (NSScreen.main?.visibleFrame.height ?? 800) - 250)) {
                 details
@@ -185,7 +185,7 @@ private struct AppDialogView: View {
         .fixedSize(horizontal: false, vertical: true)
         .modifier(DialogSurface(cornerRadius: 16))
         .onAppear { inputFocused = dialog.input != nil }
-    }
+    } }
 
     private var details: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -251,12 +251,12 @@ private struct AppDialogView: View {
     }
 
     private func buttons(_ order: [Int]) -> some View {
-        ForEach(order, id: \.self) { index in
+        ForEach(order, id: \.self) { index in WithPerceptionTracking {
             let action = dialog.actions.buttons[index]
             DialogButton(title: action.title, key: dialog.actions.key(at: index),
                          enabled: dialog.actions.isEnabled(at: index, input: dialog.input, requiresInput: dialog.requiresInput),
                          style: style(action.role)) { dialog.select(index) }
-        }
+        } }
     }
 
     private func style(_ role: DialogAction.Role) -> DialogButton.Style {
@@ -276,7 +276,7 @@ struct ShareEnvelopeIcon: View {
         Color(.displayP3, red: Double(hex >> 16 & 0xFF) / 255, green: Double(hex >> 8 & 0xFF) / 255, blue: Double(hex & 0xFF) / 255)
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Canvas { context, size in
             let ink = Self.p3(0x6362A3)
             let card = Path(roundedRect: CGRect(origin: .zero, size: size).insetBy(dx: 2, dy: 2), cornerRadius: 3.5)
@@ -296,7 +296,7 @@ struct ShareEnvelopeIcon: View {
                 context.stroke(wave, with: .color(.white.opacity(0.3)), style: StrokeStyle(lineWidth: 1.25, lineCap: .round))
             }
         }
-    }
+    } }
 }
 
 /// Arc's checkbox on its older dialog sheet: a 16 pt dark rounded square, no border, and the label
@@ -306,7 +306,7 @@ struct DialogCheckbox: View {
     let title: String
     @Binding var isOn: Bool
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button { isOn.toggle() } label: {
             HStack(spacing: 13) {
                 RoundedRectangle(cornerRadius: 4)
@@ -328,5 +328,5 @@ struct DialogCheckbox: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isOn ? [.isSelected] : [])
-    }
+    } }
 }

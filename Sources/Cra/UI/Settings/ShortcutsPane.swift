@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Arc's Shortcuts tab (Arc 1.172.2, GitHub #372): "Start with the basics" and a button for the Essential Shortcuts,
 /// a card with a search field (an action's name, or its keys as words: "command e") over one flat list of actions
@@ -15,7 +16,7 @@ struct ShortcutsPane: View {
     private static let listWidth: CGFloat = 340
     private static let rowHeight: CGFloat = 48
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 30) {
             basics
             HStack(alignment: .top, spacing: 16) {
@@ -30,7 +31,7 @@ struct ShortcutsPane: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear(perform: openRequested)
         .onChange(of: nav.shortcut) { _ in openRequested() }
-    }
+    } }
 
     /// Use Both's "Edit the shortcut" opens the pane on its action.
     private func openRequested() {
@@ -88,15 +89,15 @@ struct ShortcutsPane: View {
             .background(Color.primary.opacity(0.08))
             ScrollView(.vertical) {
                 LazyVStack(spacing: 0, pinnedViews: []) {
-                    ForEach(visible, id: \.title) { group in
+                    ForEach(visible, id: \.title) { group in WithPerceptionTracking {
                         Text(group.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
                             .padding(.leading, 16).frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
                         Rectangle().fill(Color.settingsHairline).frame(height: 1)
-                        ForEach(Array(group.actions.enumerated()), id: \.element.id) { i, a in
+                        ForEach(Array(group.actions.enumerated()), id: \.element.id) { i, a in WithPerceptionTracking {
                             row(a)
                             if i < group.actions.count - 1 { SettingsCardDivider().padding(.horizontal, 14) }
-                        }
-                    }
+                        } }
+                    } }
                 }
             }
         }
@@ -136,9 +137,9 @@ struct ShortcutsPane: View {
         let caps: [String] = a.map { $0.primary?.caps ?? [] } ?? ["⌘", "☺"]
         return VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
-                ForEach(Array((caps.isEmpty ? ["", ""] : caps).prefix(4).enumerated()), id: \.offset) { _, cap in
+                ForEach(Array((caps.isEmpty ? ["", ""] : caps).prefix(4).enumerated()), id: \.offset) { _, cap in WithPerceptionTracking {
                     BigKeyCap(glyph: cap, dim: a != nil && caps.isEmpty)
-                }
+                } }
             }
             Text(a?.name ?? "Custom Shortcuts").font(.system(size: 14, weight: .semibold))
                 .padding(.top, 22)
@@ -210,7 +211,7 @@ private struct BigKeyCap: View {
     var dim = false
     private static let rim = Color(.sRGB, red: 0.1, green: 0.38, blue: 0.9)
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack {
             RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Self.rim)
             RoundedRectangle(cornerRadius: 9, style: .continuous)
@@ -226,7 +227,7 @@ private struct BigKeyCap: View {
         .frame(width: 64, height: 64)
         .opacity(dim ? 0.4 : 1)
         .accessibilityHidden(true)
-    }
+    } }
 }
 
 /// Records a new shortcut: click it, then press the new keys; Esc cancels, ⌫ removes the shortcut.
@@ -236,7 +237,7 @@ struct ShortcutRecorder: View {
     @State private var recording = false
     @State private var monitor: Any?
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button {
             recording ? stop() : start()
         } label: {
@@ -253,7 +254,7 @@ struct ShortcutRecorder: View {
         .help("Click, then press the new shortcut. Esc cancels, ⌫ removes it.")
         .onChange(of: action.id) { _ in stop() }
         .onDisappear { stop() }
-    }
+    } }
 
     private func start() {
         recording = true

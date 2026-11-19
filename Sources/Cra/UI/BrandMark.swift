@@ -1,4 +1,5 @@
 import SwiftUI
+import Perception
 
 /// The Cra "segments" mark from brand/cra-segments.svg, rendered at build time
 /// into resources/brand (WebKit, so the multiply blends survive).
@@ -14,7 +15,7 @@ struct BrandMark: View {
         return NSImage(contentsOf: url)
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         if let img = mono ? BrandMark.monoImage : BrandMark.colour {
             Image(nsImage: img)
                 .resizable()
@@ -22,5 +23,5 @@ struct BrandMark: View {
                 .frame(width: size, height: size)
                 .accessibilityLabel("Cra")
         }
-    }
+    } }
 }

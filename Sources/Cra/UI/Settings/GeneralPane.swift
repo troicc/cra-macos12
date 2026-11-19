@@ -11,7 +11,7 @@ struct GeneralPane: View {
     @State private var showsPreviews = false
     private let system = SystemIntegration.shared
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         @Perception.Bindable var store = store
         @Perception.Bindable var updater = SoftwareUpdater.shared
         SettingsCardPane {
@@ -84,8 +84,8 @@ struct GeneralPane: View {
             TabsPane().settingsNested().padding(.top, 20)
         }
         .onAppear { system.refresh() }
-        .sheet(isPresented: $showsPreviews) { PreviewsSheet().environment(\.compatSidebarStoreBox, store) }
-    }
+        .sheet(isPresented: $showsPreviews) { WithPerceptionTracking { PreviewsSheet().environment(\.compatSidebarStoreBox, store) } }
+    } }
 
     @State private var error: String?
 }
@@ -97,7 +97,7 @@ private struct PreviewsSheet: View {
     @Environment(\.compatSidebarStore) private var store
     @Environment(\.dismiss) private var dismiss
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         @Perception.Bindable var store = store
         VStack(alignment: .leading, spacing: 10) {
             Text("Show Previews:").font(.system(size: 13, weight: .semibold))
@@ -122,5 +122,5 @@ private struct PreviewsSheet: View {
         }
         .padding(24)
         .frame(width: 422)
-    }
+    } }
 }

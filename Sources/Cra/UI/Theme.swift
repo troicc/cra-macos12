@@ -205,21 +205,21 @@ extension Color {
 struct NoiseOverlay: View {
     let amount: Double
     let isDark: Bool
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Image(nsImage: NoiseTexture.image)
             .resizable(resizingMode: .tile)
             .opacity(amount * (isDark ? 0.1 : 0.09))
             .blendMode(isDark ? .screen : .multiply)
             .allowsHitTesting(false)
-    }
+    } }
 }
 
 struct SpaceBackground: View {
     let palette: SpacePalette
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         gradient
-    }
+    } }
 
     private var gradient: some View {
         let scale = palette.vibrant ? CraTuning.shared.gradientAlphaScale : 1

@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Perception
 
 /// Settings ▸ General ▸ Sync: iCloud keeps the sidebar, the settings and the shortcuts the
 /// same on the user's Macs (SettingsSyncService); a folder a provider syncs is the other way.
@@ -10,7 +11,7 @@ struct SyncSection: View {
     @State private var importing: (URL, SyncBundleSummary)?
     @State private var notice: String?
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) { content }
             .alert("Use the sidebar from your other Mac?", isPresented: Binding(get: { sync.pendingChoice != nil }, set: { _ in })) {
                 Button("Use That Sidebar") { sync.useRemote() }
@@ -27,7 +28,7 @@ struct SyncSection: View {
             } message: {
                 if let (_, s) = importing { Text(Self.describe(s) + " Importing replaces this Mac’s sidebar, settings and shortcuts.") }
             }
-    }
+    } }
 
     @ViewBuilder private var content: some View {
         SettingsHeader("Sync")
