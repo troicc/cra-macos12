@@ -119,33 +119,51 @@ final class PageSplitDrop: PageDropTarget {
             insert = .init(index: index, orientation: splitOrientation)
             replaced = panes[index]
         }
-        let index = min(max(0, insert.index), panes.count)
+        if case .tab(let id) = payload, panes.contains(id) || store.item(id)?.isTab != true { return nil }
+        let splitID = store.splitContaining(anchor)?.id
+        let before = splitID.flatMap { store.item($0) }
+            .map { SplitPaneLayout.normalizedFactors(ids: $0.children, stored: $0.split?.widthFactors ?? [:]) } ?? [:]
+        // A full split takes no page, so a replaced pane makes room first; afterwards it would be too late
+        // (the dropped tab was lost, and the pane that came from it opened instead).
+        var remaining = panes
+        var madeRoom = false
+        if let r = replaced, splitID != nil, panes.count >= store.splitPaneLimit {
+            store.separateFromSplit(r)
+            remaining.removeAll { $0 == r }
+            madeRoom = true
+        }
+        let index = min(max(0, insert.index), remaining.count)
         let pane: UUID
         switch payload {
         case .tab(let id):
-            guard !panes.contains(id), store.item(id)?.isTab == true else { return nil }
-            if let split = store.splitContaining(anchor) {
-                store.addToSplit(split.id, tabID: id, at: index)
-                guard let s = store.splitContaining(anchor), let p = store.paneID(for: id, in: s) else { return nil }
+            if let splitID, let split = store.item(splitID), split.isSplit {
+                store.addToSplit(splitID, tabID: id, at: index)
+                guard let s = store.item(splitID), let p = store.paneID(for: id, in: s) else { return nil }
                 pane = p
             } else {
-                var order = panes
+                var order = remaining
                 order.insert(id, at: index)
                 guard let s = store.createSplit(with: order, at: anchor), let p = store.paneID(for: id, in: s) else { return nil }
                 pane = p
             }
         case .link(let link):
-            let ref = index < panes.count ? panes[index] : panes[panes.count - 1]
-            guard let tab = store.addEmptyPane(nextTo: ref, after: index >= panes.count, url: link.url, title: link.title, window: window) else { return nil }
+            let ref = index < remaining.count ? remaining[index] : remaining[remaining.count - 1]
+            guard let tab = store.addEmptyPane(nextTo: ref, after: index >= remaining.count, url: link.url, title: link.title, window: window) else { return nil }
             pane = tab.id
         }
         guard let split = store.splitContaining(pane) else { return nil }
         let others = (store.item(split.id)?.children ?? []).filter { $0 != pane }
         var factors = SplitPaneLayout.normalizedFactors(ids: others, stored: split.split?.widthFactors ?? [:])
         if let replaced {
-            store.separateFromSplit(replaced)
+            if madeRoom {
+                // The others keep the shares they had with the replaced pane still there.
+                factors = Dictionary(uniqueKeysWithValues: others.map { ($0, before[$0] ?? 0) })
+                factors[pane] = before[replaced]
+            } else {
+                store.separateFromSplit(replaced)
+                factors[pane] = factors.removeValue(forKey: replaced)
+            }
             // The page takes the replaced pane's share.
-            factors[pane] = factors.removeValue(forKey: replaced)
             store.setSplitWidthFactors(split.id, factors.mapValues(Double.init))
         } else {
             if split.split?.orientation != insert.orientation { store.flipSplitOrientation(split.id) }
