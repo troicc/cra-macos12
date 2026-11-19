@@ -25,8 +25,20 @@ jobs:
           swift --version
           cmake --version || brew install cmake
 
-      - name: Cache CEF 150
-        uses: actions/cache@v4
+      - name: Restore CEF 150 cache
+        id: cef-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: vendor/cef
+          key: cef-150.0.21-macosarm64-12.6
+
+      - name: Fetch and build CEF 150 wrapper
+        if: steps.cef-cache.outputs.cache-hit != 'true'
+        run: scripts/fetch-cef.sh
+
+      - name: Save CEF 150 cache
+        if: steps.cef-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
         with:
           path: vendor/cef
           key: cef-150.0.21-macosarm64-12.6

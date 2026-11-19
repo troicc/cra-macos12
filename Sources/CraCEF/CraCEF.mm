@@ -1399,7 +1399,6 @@ static const struct { uint32_t cef; NSUInteger kind; } kPermissionKinds[] = {
     {CEF_PERMISSION_TYPE_CAPTURED_SURFACE_CONTROL, 1 << 25},
     {CEF_PERMISSION_TYPE_WEB_APP_INSTALLATION, 1 << 26},
     {CEF_PERMISSION_TYPE_FILE_SYSTEM_ACCESS, 1 << 27},
-    {CEF_PERMISSION_TYPE_AMBIENT_LOGIN, 1 << 28},
 };
 
 static NSUInteger CraPermissionKinds(uint32_t requested) {
