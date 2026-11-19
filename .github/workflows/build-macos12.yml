@@ -1,0 +1,47 @@
+name: Build Cra for macOS 12.6 (CEF 150)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [macos12]
+
+jobs:
+  build:
+    name: Build Cra.app (arm64, macOS 12.6+, CEF 150)
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      CRA_ENGINE: cef
+      CRA_ALLOW_STOCK_CEF: "1"
+      CEF_VERSION: "150.0.21+ga61e9a5+chromium-150.0.7871.255"
+      CEF_URL: "https://cef-builds.spotifycdn.com/cef_binary_150.0.21%2Bga61e9a5%2Bchromium-150.0.7871.255_macosarm64_minimal.tar.bz2"
+      MACOSX_DEPLOYMENT_TARGET: "12.6"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          cmake --version || brew install cmake
+
+      - name: Cache CEF 150
+        uses: actions/cache@v4
+        with:
+          path: vendor/cef
+          key: cef-150.0.21-macosarm64-12.6
+
+      - name: Build Cra.app
+        run: scripts/build.sh release
+
+      - name: Package Cra.app
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent build/Cra.app Cra-macOS12-arm64.zip
+          ls -lh Cra-macOS12-arm64.zip
+
+      - name: Upload Cra-macOS12-arm64.zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cra-macOS12-arm64
+          path: Cra-macOS12-arm64.zip
+          retention-days: 14
