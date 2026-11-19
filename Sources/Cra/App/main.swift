@@ -1,6 +1,9 @@
 import AppKit
 import CraCEF
 
+// macOS 12/13: URL(string:) as macOS 14 parses it, before anything makes a URL.
+LenientURLParsing.install()
+
 // A staged update run once before it is installed, so macOS has checked the new bundle by the
 // time the user starts it (UpdatePrewarm). Nothing else of Cra runs.
 if ProcessInfo.processInfo.environment[UpdatePrewarm.environmentKey] == "1" { exit(0) }
