@@ -311,18 +311,18 @@ private struct GrainDial: View {
     @Binding var value: Double
     private let count = 24
 
-    var body: some View { WithPerceptionTracking {
-        GeometryReader { geo in WithPerceptionTracking {
+    var body: some View {
+        GeometryReader { geo in
             let c = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
             let knob = value * 2 * .pi - .pi / 2
             ZStack {
-                ForEach(0..<count, id: \.self) { i in WithPerceptionTracking {
+                ForEach(0..<count, id: \.self) { i in
                     let a = Double(i) / Double(count) * 2 * .pi - .pi / 2
                     Circle()
                         .fill(ink.opacity(Double(i) / Double(count) <= value ? 0.55 : 0.18))
                         .frame(width: 3.5, height: 3.5)
                         .position(x: c.x + 34 * cos(a), y: c.y + 34 * sin(a))
-                } }
+                }
                 Circle().fill(.black.opacity(0.12)).overlay(NoiseDisc(amount: value)).clipShape(Circle())
                     .overlay(Circle().strokeBorder(ink.opacity(0.12), lineWidth: 1))
                     .frame(width: 41, height: 41)
@@ -336,8 +336,8 @@ private struct GrainDial: View {
                 if a < 0 { a += 2 * .pi }
                 value = a / (2 * .pi)
             })
-        } }
-    } }
+        }
+    }
 }
 
 /// The dial's face: the theme's grain texture at the chosen strength.

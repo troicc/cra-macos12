@@ -222,18 +222,18 @@ private struct SegmentedC: View {
     static let radius: CGFloat = 0.50, width: CGFloat = 0.27
     static let opening = 38.0, overlap = 10.0, cut = 0.72
 
-    var body: some View { WithPerceptionTracking {
-        GeometryReader { g in WithPerceptionTracking {
+    var body: some View {
+        GeometryReader { g in
             let span = (360 - 2 * Self.opening + 3 * Self.overlap) / 4
             ZStack {
-                ForEach(0..<4, id: \.self) { i in WithPerceptionTracking {
+                ForEach(0..<4, id: \.self) { i in
                     let start = Self.opening + Double(i) * (span - Self.overlap)
                     Ribbon(start: start, end: start + span)
                         .stroke(.black.opacity(Self.cut), style: StrokeStyle(lineWidth: g.size.height * Self.width, lineCap: .round))
-                } }
+                }
             }
-        } }
-    } }
+        }
+    }
 
     private struct Ribbon: Shape {
         let start: Double, end: Double
