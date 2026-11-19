@@ -249,6 +249,7 @@ struct AskOnPageInput: NSViewRepresentable {
     func update(_ field: AskOnPageTextField) {
         field.update(query: query, placeholder: placeholder, fontSize: fontSize, focusToken: focusToken, visible: visible)
     }
+    @available(macOS 13.0, *)
     func sizeThatFits(_ proposal: ProposedViewSize, nsView: AskOnPageTextField, context: Context) -> CGSize? {
         CGSize(width: max(0, proposal.width ?? 0), height: ceil(nsView.intrinsicContentSize.height))
     }
@@ -280,7 +281,7 @@ struct AskOnPageView: View {
         }
         .frame(width: state.width, alignment: .top)
         .fixedSize(horizontal: false, vertical: true)
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { controller?.heightChanged($0) }
+        .compatOnGeometryChange(for: CGFloat.self) { $0.size.height } action: { controller?.heightChanged($0) }
         .frame(maxHeight: .infinity, alignment: .top)
         // Arc's card is nearly opaque (the reporter's capture): the material only shows at its edge.
         .background(RoundedRectangle(cornerRadius: AskOnPageMetrics.radius, style: .continuous)
@@ -315,7 +316,7 @@ struct AskOnPageView: View {
                 RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Color.primary.opacity(0.06)).padding(6)
             }
         }
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { state.inputHeight = $0 }
+        .compatOnGeometryChange(for: CGFloat.self) { $0.size.height } action: { state.inputHeight = $0 }
     }
 
     @ViewBuilder private var findControls: some View {
@@ -389,7 +390,7 @@ private struct AskOnPageConversation: View {
                 }
                 .padding(.horizontal, 18).padding(.top, 17).padding(.bottom, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
+                .compatOnGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
             }
             .compatScrollIndicators(.automatic)
             .frame(height: min(max(contentHeight, 1), state.conversationHeightLimit))
@@ -399,7 +400,7 @@ private struct AskOnPageConversation: View {
 
     private func messageView(_ message: AskOnPageService.Message, proxy: ScrollViewProxy) -> some View {
         AskOnPageMessageView(message: message, state: state, controller: controller)
-            .onGeometryChange(for: Bool.self) { $0.size.height > 0 } action: { laidOut in
+            .compatOnGeometryChange(for: Bool.self) { $0.size.height > 0 } action: { laidOut in
                 guard laidOut, revealedQuestionID != message.id,
                       message.id == (state.service.current?.id ?? state.service.messages.last?.id) else { return }
                 revealedQuestionID = message.id

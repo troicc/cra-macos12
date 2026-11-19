@@ -366,8 +366,15 @@ final class UpdateHeartView: NSView {
         head.addLine(to: CGPoint(x: 123.5, y: 155 + dy))
         head.addLine(to: CGPoint(x: 162, y: 123.5 + dy))
         let w: CGFloat = 17
-        return stem.copy(strokingWithWidth: w, lineCap: .round, lineJoin: .round, miterLimit: 4)
-            .union(head.copy(strokingWithWidth: w, lineCap: .round, lineJoin: .round, miterLimit: 4))
+        let strokedStem = stem.copy(strokingWithWidth: w, lineCap: .round, lineJoin: .round, miterLimit: 4)
+        let strokedHead = head.copy(strokingWithWidth: w, lineCap: .round, lineJoin: .round, miterLimit: 4)
+        if #available(macOS 13.0, *) {
+            return strokedStem.union(strokedHead)
+        }
+        let combined = CGMutablePath()
+        combined.addPath(strokedStem)
+        combined.addPath(strokedHead)
+        return combined
     }
 
     private func transform() -> CGAffineTransform {
@@ -377,7 +384,12 @@ final class UpdateHeartView: NSView {
     }
 
     private func heartWithArrow(_ dy: CGFloat) -> CGPath {
-        let p = Self.heartPath().subtracting(Self.arrowPath(dy: dy))
+        let p: CGPath
+        if #available(macOS 13.0, *) {
+            p = Self.heartPath().subtracting(Self.arrowPath(dy: dy))
+        } else {
+            p = Self.heartPath()
+        }
         var t = transform()
         return p.copy(using: &t) ?? p
     }

@@ -60,7 +60,7 @@ struct KeepActiveSitesView: View {
         } label: {
             Text("Add Site")
         }
-        .menuStyle(.button)
+        .compatMenuButtonStyle()
         .fixedSize()
         .controlSize(.large)
     }

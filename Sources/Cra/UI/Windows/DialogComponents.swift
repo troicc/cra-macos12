@@ -130,6 +130,7 @@ struct DialogScrollContent<Content: View>: NSViewRepresentable {
         resize(scroll)
     }
 
+    @available(macOS 13.0, *)
     func sizeThatFits(_ proposal: ProposedViewSize, nsView scroll: NSScrollView, context: Context) -> CGSize? {
         resize(scroll)
     }

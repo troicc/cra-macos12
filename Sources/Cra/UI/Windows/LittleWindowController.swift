@@ -1854,7 +1854,11 @@ final class LittleWindowController: NSWindowController, NSWindowDelegate, @preco
         guard let pid = focusReturn.target(closingKeyWindow: hadKeyboard, craActive: NSApp.isActive, movedToTab: movedToTab),
               let other = NSRunningApplication(processIdentifier: pid), !other.isTerminated else { return }
         CraLog.note("Little Window closed: the app it was opened over comes forward (#430)")
-        other.activate(from: .current, options: [])
+        if #available(macOS 14.0, *) {
+            other.activate(from: .current, options: [])
+        } else {
+            other.activate(options: .activateIgnoringOtherApps)
+        }
     }
 
     /// Left with the green button or ⌃⌘F while a video was fullscreen: the page leaves too.

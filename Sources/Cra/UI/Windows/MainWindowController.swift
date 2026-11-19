@@ -49,7 +49,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, BrowserM
     /// Where the Library was sliding when the swipe caught it (LibrarySwipe.reveal's `toward`).
     private var librarySwipeToward: CGFloat?
     private var librarySettleSpring: (start: CFTimeInterval, from: CGFloat, velocity: CGFloat, target: CGFloat)?
-    private var librarySettleLink: CADisplayLink?
+    private var librarySettleLink: CompatDisplayLink?
     /// Shows the lists' overlay knob again once a swipe's scroller flash has faded.
     private var swipeKnobReveal: DispatchWorkItem?
     /// Whether a touch over the sidebar hides the lists' knob (#77), or leaves it showing (#544).
@@ -1449,8 +1449,14 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, BrowserM
         // slid out at the edge: that one is the sidebar, whose rows stay in reach of a Peek (#242, #295).
         // The command bar ⌘T opened from a Peek stays above the Peek (#379).
         let bar: [NSWindow] = commandBar.isOpen && commandPanel.parent === window ? [commandPanel] : []
-        let wanted = panels.compactMap { $0 } + peeks.flatMap(\.peekWindows) + (floatingSidebar?.attachedPanels ?? [])
-            + AgentCursor.panels(over: window) + AgentPill.panels(over: window) + ChromiumDialogs.dialogs(over: window) + PermissionPopover.panels(over: window) + bar
+        var wanted: [NSWindow] = panels.compactMap { $0 }
+        wanted.append(contentsOf: peeks.flatMap(\.peekWindows))
+        wanted.append(contentsOf: floatingSidebar?.attachedPanels ?? [])
+        wanted.append(contentsOf: AgentCursor.panels(over: window))
+        wanted.append(contentsOf: AgentPill.panels(over: window))
+        wanted.append(contentsOf: ChromiumDialogs.dialogs(over: window))
+        wanted.append(contentsOf: PermissionPopover.panels(over: window))
+        wanted.append(contentsOf: bar)
         // Already the last children, in order, and showing: re-adding each one rebuilt the
         // window's ordering group, a window server round trip, on every tab switch.
         let children = window.childWindows ?? []
@@ -3288,13 +3294,13 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, BrowserM
     private func settleLibrary(from r: CGFloat, velocity: CGFloat, to target: CGFloat) {
         librarySettleSpring = (start: CACurrentMediaTime(), from: r, velocity: velocity, target: target)
         if librarySettleLink == nil {
-            let link = shell.displayLink(target: self, selector: #selector(stepLibrarySettle))
+            let link = shell.compatDisplayLink(target: self, selector: #selector(stepLibrarySettle))
             link.add(to: .main, forMode: .common)
             librarySettleLink = link
         }
     }
 
-    @objc private func stepLibrarySettle(_ link: CADisplayLink) {
+    @objc private func stepLibrarySettle(_ link: CompatDisplayLink) {
         guard let s = librarySettleSpring else { return stopLibrarySettle() }
         let t = CGFloat(link.targetTimestamp - s.start)
         if LibrarySwipe.isSettled(from: s.from, velocity: s.velocity, to: s.target, at: t, width: sidebarUI.libraryRevealWidth) {

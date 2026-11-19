@@ -45,7 +45,7 @@ final class EssentialShortcutsWindow {
             p?.close()
             viewAll()
         }))
-        if #available(macOS 13.0, *) { host.sizingOptions = []  // the title bar sits inside Arc's 462 pt, so the view doesn't size the window }
+        if #available(macOS 13.0, *) { host.sizingOptions = [] }  // the title bar sits inside Arc's 462 pt, so the view doesn't size the window
         p.contentView = host
         p.setFrame(NSRect(origin: .zero, size: size), display: false)
         if let screen = TestScreen.screen ?? NSScreen.main {

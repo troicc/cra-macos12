@@ -287,7 +287,7 @@ extension UTType {
     static let craSidebarItem = UTType(exportedAs: "dk.kildahl.cra.sidebar-item")
 }
 
-struct SidebarDragItem: Codable, Transferable {
+struct SidebarDragItem: Codable {
     let id: UUID
 
     /// `.draggable` evaluates its payload when the drag starts; record what
@@ -296,7 +296,10 @@ struct SidebarDragItem: Codable, Transferable {
         MainActor.assumeIsolated { ui.draggingID = id }
         return SidebarDragItem(id: id)
     }
+}
 
+@available(macOS 13.0, *)
+extension SidebarDragItem: Transferable {
     static var transferRepresentation: some TransferRepresentation {
         CodableRepresentation(contentType: .craSidebarItem)
     }

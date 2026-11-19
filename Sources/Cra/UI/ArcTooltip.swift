@@ -341,27 +341,48 @@ private struct ArcTooltipModifier: ViewModifier {
     @State private var source = ArcTooltipSource()
 
     func body(content: Content) -> some View {
-        content
-            .onGeometryChange(for: CGSize.self) { $0.size } action: { source.size = $0 }
-            .onContinuousHover(coordinateSpace: .local) { phase in
-                switch phase {
-                case .active(let location):
-                    source.text = text
-                    source.keys = keys
-                    source.followsCursor = followsCursor
-                    source.subtitle = subtitle
-                    source.optionText = optionText
-                    source.onShow = onShow
-                    source.hovered(at: location, entered: !source.isHovered)
-                    source.isHovered = true
-                    ArcTooltipController.shared.mouseMoved(in: source)
-                case .ended:
-                    source.isHovered = false
-                    ArcTooltipController.shared.mouseExited(source)
+        let base = content
+            .compatOnGeometryChange(for: CGSize.self) { $0.size } action: { source.size = $0 }
+        Group {
+            if #available(macOS 13.0, *) {
+                base.onContinuousHover(coordinateSpace: .local) { phase in
+                    switch phase {
+                    case .active(let location):
+                        source.text = text
+                        source.keys = keys
+                        source.followsCursor = followsCursor
+                        source.subtitle = subtitle
+                        source.optionText = optionText
+                        source.onShow = onShow
+                        source.hovered(at: location, entered: !source.isHovered)
+                        source.isHovered = true
+                        ArcTooltipController.shared.mouseMoved(in: source)
+                    case .ended:
+                        source.isHovered = false
+                        ArcTooltipController.shared.mouseExited(source)
+                    }
+                }
+            } else {
+                base.onHover { hovering in
+                    if hovering {
+                        source.text = text
+                        source.keys = keys
+                        source.followsCursor = followsCursor
+                        source.subtitle = subtitle
+                        source.optionText = optionText
+                        source.onShow = onShow
+                        source.hovered(at: CGPoint(x: source.size.width / 2, y: source.size.height / 2), entered: !source.isHovered)
+                        source.isHovered = true
+                        ArcTooltipController.shared.mouseMoved(in: source)
+                    } else {
+                        source.isHovered = false
+                        ArcTooltipController.shared.mouseExited(source)
+                    }
                 }
             }
-            // Row buttons vanish when the row loses hover; their tip goes with them.
-            .onDisappear { ArcTooltipController.shared.mouseExited(source) }
+        }
+        // Row buttons vanish when the row loses hover; their tip goes with them.
+        .onDisappear { ArcTooltipController.shared.mouseExited(source) }
     }
 }
 

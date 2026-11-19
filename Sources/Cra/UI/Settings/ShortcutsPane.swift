@@ -78,7 +78,7 @@ struct ShortcutsPane: View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass").font(.system(size: 13)).foregroundStyle(.secondary)
-                TextField("", text: $query, prompt: Text("Type a feature name or shortcut (like “Command E”)").foregroundStyle(.secondary))
+                TextField("", text: $query, prompt: Text("Type a feature name or shortcut (like “Command E”)").foregroundColor(.secondary))
                     .textFieldStyle(.plain).font(.system(size: 13))
                 if !query.isEmpty {
                     Button { query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain)
@@ -178,7 +178,7 @@ struct ShortcutsPane: View {
                         .frame(width: 24, height: 24)
                         .background(Circle().fill(Color.primary.opacity(0.14)))
                 }
-                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+                .compatMenuButtonStyle().buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

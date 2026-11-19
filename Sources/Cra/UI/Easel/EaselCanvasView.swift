@@ -1026,7 +1026,11 @@ final class EaselSheetView: NSView, NSTextFieldDelegate, NSMenuItemValidation {
         case .serif:
             let regular = NSFont.systemFont(ofSize: size, weight: .regular)
             return regular.fontDescriptor.withDesign(.serif).flatMap { NSFont(descriptor: $0, size: size) } ?? regular
-        case .wide: return NSFont.systemFont(ofSize: size, weight: .heavy, width: .expanded)
+        case .wide:
+            if #available(macOS 13.0, *) {
+                return NSFont.systemFont(ofSize: size, weight: .heavy, width: .expanded)
+            }
+            return NSFont.systemFont(ofSize: size, weight: .heavy)
         case .mono: return NSFont.monospacedSystemFont(ofSize: size, weight: .bold)
         }
     }

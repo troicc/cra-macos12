@@ -1296,7 +1296,7 @@ final class ShellView: NSView {
                                     visible: visible, floating: floating, fullscreen: fullscreen)
         guard duration > 0, window != nil else { return finishSidebarSlide() }
         if sidebarSlideLink == nil {
-            let link = displayLink(target: self, selector: #selector(stepSidebarSlide))
+            let link = compatDisplayLink(target: self, selector: #selector(stepSidebarSlide))
             link.add(to: .main, forMode: .common)
             sidebarSlideLink = link
         }
@@ -1314,7 +1314,7 @@ final class ShellView: NSView {
     }
 
     private var sidebarSlide: SidebarSlide?
-    private var sidebarSlideLink: CADisplayLink?
+    private var sidebarSlideLink: CompatDisplayLink?
     private var slideAlongside: ((Double) -> Void)?
     private var slideCompletion: (() -> Void)?
 
@@ -1330,7 +1330,7 @@ final class ShellView: NSView {
     /// Each frame of the slide and its end, once the page area has moved (a Peek follows it, #402).
     var onSidebarSlideFrame: (() -> Void)?
 
-    @objc private func stepSidebarSlide(_ link: CADisplayLink) {
+    @objc private func stepSidebarSlide(_ link: CompatDisplayLink) {
         guard let s = sidebarSlide else { return finishSidebarSlide() }
         let t = link.targetTimestamp - s.start
         guard t < s.duration else { return finishSidebarSlide() }

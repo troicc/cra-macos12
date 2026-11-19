@@ -19,7 +19,7 @@ struct AirTrafficControlView: View {
                 Spacer(minLength: 8)
                 Button { addRoute() } label: { Text("New Route").frame(width: 94) }
                     .controlSize(.large)
-                    .buttonBorderShape(.roundedRectangle(radius: 6))
+                    .buttonBorderShape(.roundedRectangle)
                 Button { dismiss() } label: {
                     Image(systemName: "xmark").font(.system(size: 15, weight: .light)).frame(width: 32, height: 32).contentShape(Rectangle())
                 }

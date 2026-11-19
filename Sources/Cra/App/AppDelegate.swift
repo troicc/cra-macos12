@@ -1304,8 +1304,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             // screen (#511). NSApp.deactivate() alone sometimes left Cra the active app with no key window.
             if dict["deactivate"] == "1" {
                 if let finder = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.finder").first {
-                    NSApp.yieldActivation(to: finder)
-                    finder.activate(from: .current, options: [])
+                    if #available(macOS 14.0, *) {
+                        NSApp.yieldActivation(to: finder)
+                        finder.activate(from: .current, options: [])
+                    } else {
+                        finder.activate(options: .activateIgnoringOtherApps)
+                    }
                 } else {
                     NSApp.deactivate()
                 }

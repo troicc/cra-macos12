@@ -438,7 +438,8 @@ private struct BrowserCard: View {
                 } else if selected, let plan = model.plan, !plan.spaces.isEmpty {
                     Button { model.continueFromSource() } label: {
                         Text("\(model.selectedSpaces.count) of \(plan.spaces.count) spaces")
-                            .font(.system(size: 11)).foregroundStyle(c.body).underline(hover)
+                            .underline(hover)
+                            .font(.system(size: 11)).foregroundStyle(c.body)
                     }
                     .buttonStyle(.plain)
                     .transition(.opacity)

@@ -33,7 +33,7 @@ extension View {
     /// A button scenario hooks can click by `title` (DialogClick).
     @ViewBuilder func clickTarget(_ title: String) -> some View {
         if DialogClick.recording {
-            onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
+            compatOnGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
                 MainActor.assumeIsolated { DialogClick.frames[title] = frame }
             }
         } else {

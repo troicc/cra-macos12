@@ -39,7 +39,12 @@ final class SystemIntegration {
         if defaultBrowserURL != other { defaultBrowserURL = other }
         let docked = Dock.contains(bundleID: Bundle.main.bundleIdentifier ?? "", in: Dock.persistentApps())
         if isInDock != docked { isInDock = docked }
-        let login = SMAppService.mainApp.status == .enabled
+        let login: Bool
+        if #available(macOS 13.0, *) {
+            login = SMAppService.mainApp.status == .enabled
+        } else {
+            login = false
+        }
         if launchesAtLogin != login { launchesAtLogin = login }
     }
 
@@ -84,6 +89,7 @@ final class SystemIntegration {
     @discardableResult
     func setLaunchAtLogin(_ on: Bool) -> String? {
         defer { refresh() }
+        guard #available(macOS 13.0, *) else { return "Launch at login requires macOS 13 or later." }
         do {
             if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
             if on && SMAppService.mainApp.status == .requiresApproval {

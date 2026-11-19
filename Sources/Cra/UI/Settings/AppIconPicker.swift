@@ -27,11 +27,7 @@ struct IconPane: View {
                     }
                     Button("Choose Image…") { chooseImage() }
                 }
-                .dropDestination(for: URL.self) { urls, _ in
-                    guard let url = urls.first else { return false }
-                    use(url)
-                    return true
-                }
+                .modifier(CompatURLDropModifier(onDrop: use))
             }
             SettingsFootnote("Pick any image or drop one on “Your own icon”. It’s sized to match the other icons in the Dock, and a photo or a logo on a background fills the rounded tile. The Dock keeps the icon after Cra quits.")
             if let error { SettingsFootnote(error).foregroundStyle(.red) }

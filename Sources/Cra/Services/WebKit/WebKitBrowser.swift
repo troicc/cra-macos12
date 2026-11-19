@@ -131,7 +131,9 @@ final class WebKitBrowser: CraBrowser, WKNavigationDelegate, WKUIDelegate, WKDow
         content.add(proxy, contentWorld: Self.world, name: "cra")
         messages = proxy
         configuration.userContentController = content
-        configuration.preferences.isElementFullscreenEnabled = true
+        if #available(macOS 12.3, *) {
+            configuration.preferences.isElementFullscreenEnabled = true
+        }
         // Off for apps other than Safari: video.requestPictureInPicture() answered NotSupportedError,
         // so the sidebar player's button and auto Picture in Picture did nothing.
         if configuration.preferences.responds(to: NSSelectorFromString("_setAllowsPictureInPictureMediaPlayback:")) {

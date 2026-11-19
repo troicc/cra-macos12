@@ -336,7 +336,7 @@ private struct BoostEditorView: View {
                     Image(systemName: "chevron.down").font(.system(size: 10, weight: .semibold)).foregroundStyle(BoostStyle.ink)
                 }
             }
-            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+            .compatMenuButtonStyle().buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
             Spacer(minLength: 0)
             Button { model.undo() } label: {
                 Image(systemName: "arrow.counterclockwise").font(.system(size: 14, weight: .semibold)).frame(width: 40, height: 40)
@@ -369,11 +369,11 @@ private struct BoostEditorView: View {
                         Button(s == 1 ? "Original" : "\(Int(s * 100)) %") { model.change { $0.textScale = s } }
                     }
                 } label: { wide("Size", trailing: nil) }
-                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).help("Change text size")
+                .compatMenuButtonStyle().buttonStyle(.plain).menuIndicator(.hidden).help("Change text size")
                 Menu {
                     ForEach(Boost.TextCase.allCases, id: \.self) { c in Button(c.title) { model.change { $0.textCase = c } } }
                 } label: { wide("Case", trailing: nil) }
-                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).help("Change text case")
+                .compatMenuButtonStyle().buttonStyle(.plain).menuIndicator(.hidden).help("Change text case")
             }
             .frame(width: 147)
             // Arc 1.172.2: with something zapped the bolt gives way to the count.
@@ -400,7 +400,7 @@ private struct BoostEditorView: View {
         .frame(width: 224)
         .environment(\.colorScheme, .light)
         .preferredColorScheme(.light)
-        .presentationBackground(.regularMaterial)
+        .compatPresentationBackgroundRegularMaterial()
     }
 
     private func slider(_ title: String, _ key: WritableKeyPath<Boost, Double>) -> some View {
