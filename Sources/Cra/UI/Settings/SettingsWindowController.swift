@@ -128,6 +128,12 @@ struct SettingsRoot: View {
     let actions: SettingsActions
     let titleChanged: (SettingsTab) -> Void
 
+    /// A titled window's title bar (28 pt).
+    static let titleBarHeight: CGFloat = {
+        let content = NSRect(x: 0, y: 0, width: 100, height: 100)
+        return NSWindow.frameRect(forContentRect: content, styleMask: [.titled]).height - content.height
+    }()
+
     var body: some View {
         WithPerceptionTracking {
             VStack(spacing: 0) {
@@ -148,9 +154,10 @@ struct SettingsRoot: View {
                     .frame(height: 28)
                     .allowsHitTesting(false)
             }
-            // Fixed at Arc's size, title bar included. macOS 12's NSHostingController has no sizingOptions and sizes
-            // the window to the pane's ideal height (Profiles grew it to 703 × 2322, past the screen).
-            .frame(width: SettingsMetrics.windowSize.width, height: SettingsMetrics.windowSize.height)
+            // Fixed at Arc's size. macOS 12's NSHostingController has no sizingOptions and sizes the window to the
+            // pane's ideal height (Profiles grew it to 703 × 2322, past the screen). The frame sits inside the title
+            // bar's safe area, so it is that much shorter, and the content then reaches up under the title bar.
+            .frame(width: SettingsMetrics.windowSize.width, height: SettingsMetrics.windowSize.height - Self.titleBarHeight)
             .ignoresSafeArea(.container, edges: .top)
             .onChange(of: nav.tab) { tab in titleChanged(tab) }
         }
