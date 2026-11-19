@@ -1154,9 +1154,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
                     return String(describing: type(of: layer)) == "CALayerHost" || (layer.sublayers ?? []).contains { hosts($0) }
                 }
                 let id = main.browsers.visibleTabID
-                let view = id.flatMap { main.browsers.runtime(for: $0) }?.browser.containerView
-                let inCard = id.map { !main.browsers.waitsForItsPane($0) && view?.window === main.window } ?? false
-                CraLog.note("page drawn \(label): inCard=\(inCard ? 1 : 0) drawn=\(hosts(view?.layer) ? 1 : 0)")
+                let rt = id.flatMap { main.browsers.runtime(for: $0) }
+                let view = rt?.browser.containerView
+                // On CEF with EmbeddedPages, ViewsCompositorSuperview (which holds CALayerHost) is
+                // moved into the card's webArea alongside containerView rather than inside it.
+                let embedded = rt?.hostWindow.flatMap { EmbeddedPages.isHost($0) ? EmbeddedPages.pageViews(of: $0) : nil }
+                let inCard = id.map { !main.browsers.waitsForItsPane($0) && (embedded?.first?.window === main.window || view?.window === main.window) } ?? false
+                let drawn = hosts(view?.layer) || (embedded?.contains { hosts($0.layer) } ?? false)
+                CraLog.note("page drawn \(label): inCard=\(inCard ? 1 : 0) drawn=\(drawn ? 1 : 0)")
                 return
             }
             // actionState=<extension id>: what the extension set on its toolbar action, as Cra's buttons show it

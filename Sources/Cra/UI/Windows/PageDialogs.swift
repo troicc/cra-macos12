@@ -52,7 +52,10 @@ enum PageDialogs {
         let text = all.filter { $0.accessibilityRole() == .staticText }
             .compactMap { ($0.accessibilityValue() as? String) ?? $0.accessibilityLabel() }
             .map { $0.split(whereSeparator: \.isNewline).joined(separator: " ") }.filter { !$0.isEmpty }
-        let buttons = all.filter { $0.accessibilityRole() == .button }.compactMap { $0.accessibilityTitle() ?? $0.accessibilityLabel() }.filter { !$0.isEmpty }
+        // The first of title and label that says something: Chromium 150's views buttons answer an
+        // empty title and keep the text in the label (macOS 12 builds on CEF 150).
+        let buttons = all.filter { $0.accessibilityRole() == .button }
+            .compactMap { b in [b.accessibilityTitle(), b.accessibilityLabel()].compactMap { $0 }.first { !$0.isEmpty } }
         let fields = all.filter { $0.accessibilityRole() == .textField }.count
         return "page dialog \(label): \(kind) \(Int(w.frame.width))x\(Int(w.frame.height)) at=\(at.rawValue) front=\(inFront(w) ? 1 : 0)"
             + " text=\(text.joined(separator: "|")) buttons=\(buttons.joined(separator: "|")) fields=\(fields)"
