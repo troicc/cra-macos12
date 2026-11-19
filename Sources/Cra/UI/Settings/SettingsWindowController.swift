@@ -148,6 +148,9 @@ struct SettingsRoot: View {
                     .frame(height: 28)
                     .allowsHitTesting(false)
             }
+            // Fixed at Arc's size, title bar included. macOS 12's NSHostingController has no sizingOptions and sizes
+            // the window to the pane's ideal height (Profiles grew it to 703 × 2322, past the screen).
+            .frame(width: SettingsMetrics.windowSize.width, height: SettingsMetrics.windowSize.height)
             .ignoresSafeArea(.container, edges: .top)
             .onChange(of: nav.tab) { tab in titleChanged(tab) }
         }
