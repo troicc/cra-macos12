@@ -117,7 +117,7 @@ struct LinksPane: View {
         }
         .compatScrollIndicators(.automatic)
         .sheet(isPresented: $showsAirTrafficControl) {
-            AirTrafficControlView().environment(\.compatSidebarStore, store)
+            AirTrafficControlView().environment(\.compatSidebarStoreBox, store)
         }
     }
 

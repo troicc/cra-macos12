@@ -5384,7 +5384,15 @@ final class CraWindow: NSWindow {
             guard let sv = b.superview else { continue }
             if fullScreen, trafficLightsParked || b.frame.minX > -Self.parkedShift / 2 { continue }
             let x = CGFloat(x) - (trafficLightsParked ? Self.parkedShift : 0)
-            let y = sv.bounds.height - CraMetrics.titleRowCenter - b.frame.height / 2
+            let rawY = sv.bounds.height - CraMetrics.titleRowCenter - b.frame.height / 2
+            // On macOS < 14, NSTitlebarView clips subviews to its bounds (28 pt tall), so a negative y
+            // cuts off the bottom of the traffic lights.
+            let y: CGFloat
+            if #available(macOS 14.0, *) {
+                y = rawY
+            } else {
+                y = max(2, rawY)
+            }
             let target = NSPoint(x: x, y: y)
             if abs(b.frame.origin.x - target.x) > 0.5 || abs(b.frame.origin.y - target.y) > 0.5 {
                 b.setFrameOrigin(target)

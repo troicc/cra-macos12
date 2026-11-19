@@ -106,7 +106,7 @@ struct TabsPane: View {
             SettingsFootnote(tabSleepNote)
         }
         .sheet(isPresented: $showsKeepActiveSites) {
-            KeepActiveSitesView().environment(\.compatSidebarStore, store)
+            KeepActiveSitesView().environment(\.compatSidebarStoreBox, store)
         }
     }
 

@@ -253,14 +253,24 @@ private struct CompatSettingsSyncServiceKey: EnvironmentKey {
 }
 
 extension EnvironmentValues {
-    var compatSidebarStore: SidebarStore {
-        get { self[CompatSidebarStoreKey.self]! }
+    /// Writable optional box used with `.environment(\.compatSidebarStoreBox, store)` so SwiftUI's
+    /// `WritableKeyPath` copy-in getter never force-unwraps `nil` before writing.
+    var compatSidebarStoreBox: SidebarStore? {
+        get { self[CompatSidebarStoreKey.self] }
         set { self[CompatSidebarStoreKey.self] = newValue }
     }
 
-    var compatFavicons: FaviconCache {
-        get { self[CompatFaviconCacheKey.self]! }
+    var compatSidebarStore: SidebarStore {
+        self[CompatSidebarStoreKey.self]!
+    }
+
+    var compatFaviconsBox: FaviconCache? {
+        get { self[CompatFaviconCacheKey.self] }
         set { self[CompatFaviconCacheKey.self] = newValue }
+    }
+
+    var compatFavicons: FaviconCache {
+        self[CompatFaviconCacheKey.self]!
     }
 
     var compatBindings: KeyBindingRegistry {
@@ -268,9 +278,13 @@ extension EnvironmentValues {
         set { self[CompatKeyBindingRegistryKey.self] = newValue }
     }
 
-    var compatSync: SettingsSyncService {
-        get { self[CompatSettingsSyncServiceKey.self]! }
+    var compatSyncBox: SettingsSyncService? {
+        get { self[CompatSettingsSyncServiceKey.self] }
         set { self[CompatSettingsSyncServiceKey.self] = newValue }
+    }
+
+    var compatSync: SettingsSyncService {
+        self[CompatSettingsSyncServiceKey.self]!
     }
 }
 

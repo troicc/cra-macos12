@@ -84,7 +84,7 @@ struct GeneralPane: View {
             TabsPane().settingsNested().padding(.top, 20)
         }
         .onAppear { system.refresh() }
-        .sheet(isPresented: $showsPreviews) { PreviewsSheet().environment(\.compatSidebarStore, store) }
+        .sheet(isPresented: $showsPreviews) { PreviewsSheet().environment(\.compatSidebarStoreBox, store) }
     }
 
     @State private var error: String?

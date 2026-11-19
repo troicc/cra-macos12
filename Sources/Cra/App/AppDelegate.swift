@@ -1658,7 +1658,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             // airTrafficControl=<png path>: the Air Traffic Control sheet with the current routes,
             // drawn off screen (#258), so its popups can be checked without taking the screen.
             if let out = dict["airTrafficControl"] {
-                let host = NSHostingView(rootView: AirTrafficControlView().environment(\.compatSidebarStore, store))
+                let host = NSHostingView(rootView: AirTrafficControlView().environment(\.compatSidebarStoreBox, store))
                 host.frame = NSRect(x: 0, y: 0, width: 508, height: 440)
                 let window = NSWindow(contentRect: NSRect(x: -10_000, y: -10_000, width: 508, height: 440),
                                       styleMask: .borderless, backing: .buffered, defer: false)

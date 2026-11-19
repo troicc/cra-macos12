@@ -101,7 +101,7 @@ final class SettingsWindowController: NSWindowController {
         // do, instead of macOS swiping back to a Desktop to show it; one shown before follows to the active Space (#431).
         window.collectionBehavior = [.fullScreenAuxiliary, .moveToActiveSpace]
         let root = SettingsRoot(nav: nav, actions: actions) { [weak window] tab in window?.title = tab.title(fullName: NSFullUserName()) }
-            .environment(\.compatSidebarStore, store).environment(\.compatBindings, bindings).environment(\.compatSync, sync)
+            .environment(\.compatSidebarStoreBox, store).environment(\.compatBindings, bindings).environment(\.compatSyncBox, sync)
         let host = NSHostingController(rootView: root)
         if #available(macOS 13.0, *) { host.sizingOptions = [] }
         window.contentViewController = host
@@ -129,26 +129,28 @@ struct SettingsRoot: View {
     let titleChanged: (SettingsTab) -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            SettingsTabBar(nav: nav)
-                .padding(.top, SettingsMetrics.tabBarTop)
-                .frame(height: SettingsMetrics.tabBarTop + SettingsMetrics.tabBarHeight, alignment: .top)
-            Rectangle().fill(Color(nsColor: SettingsPalette.tabLine)).frame(height: 1)
-            pane
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                // Scroll views can draw into the ignored titlebar safe area. Keep every
-                // pane inside its viewport below the tabs.
-                .clipped()
+        WithPerceptionTracking {
+            VStack(spacing: 0) {
+                SettingsTabBar(nav: nav)
+                    .padding(.top, SettingsMetrics.tabBarTop)
+                    .frame(height: SettingsMetrics.tabBarTop + SettingsMetrics.tabBarHeight, alignment: .top)
+                Rectangle().fill(Color(nsColor: SettingsPalette.tabLine)).frame(height: 1)
+                pane
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    // Scroll views can draw into the ignored titlebar safe area. Keep every
+                    // pane inside its viewport below the tabs.
+                    .clipped()
+            }
+            .background(Color.settingsWindow)
+            // Arc's title, the tab's name, centred and dimmed in the title bar (the system's would sit beside the buttons).
+            .overlay(alignment: .top) {
+                Text(nav.tab.title(fullName: NSFullUserName())).font(.system(size: 13, weight: .bold)).foregroundStyle(.secondary)
+                    .frame(height: 28)
+                    .allowsHitTesting(false)
+            }
+            .ignoresSafeArea(.container, edges: .top)
+            .onChange(of: nav.tab) { tab in titleChanged(tab) }
         }
-        .background(Color.settingsWindow)
-        // Arc's title, the tab's name, centred and dimmed in the title bar (the system's would sit beside the buttons).
-        .overlay(alignment: .top) {
-            Text(nav.tab.title(fullName: NSFullUserName())).font(.system(size: 13, weight: .bold)).foregroundStyle(.secondary)
-                .frame(height: 28)
-                .allowsHitTesting(false)
-        }
-        .ignoresSafeArea(.container, edges: .top)
-        .onChange(of: nav.tab) { tab in titleChanged(tab) }
     }
 
     @ViewBuilder private var pane: some View {
@@ -179,12 +181,14 @@ struct SettingsTabBar: View {
     let nav: SettingsNavigation
 
     var body: some View {
-        HStack(spacing: 1) {
-            ForEach(SettingsTab.allCases) { tab in
-                SettingsTabButton(tab: tab, selected: nav.tab == tab) { nav.show(tab) }
+        WithPerceptionTracking {
+            HStack(spacing: 1) {
+                ForEach(SettingsTab.allCases) { tab in
+                    SettingsTabButton(tab: tab, selected: nav.tab == tab) { nav.show(tab) }
+                }
             }
+            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity)
     }
 }
 
