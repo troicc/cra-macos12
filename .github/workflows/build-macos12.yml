@@ -13,8 +13,12 @@ jobs:
     env:
       CRA_ENGINE: cef
       CRA_ALLOW_STOCK_CEF: "1"
-      CEF_VERSION: "150.0.21+ga61e9a5+chromium-150.0.7871.255"
-      CEF_URL: "https://cef-builds.spotifycdn.com/cef_binary_150.0.21%2Bga61e9a5%2Bchromium-150.0.7871.255_macosarm64_minimal.tar.bz2"
+      # OBS Studio 33's own CEF 150 build (branch 7871): built with Chromium's proprietary codecs,
+      # so H.264/AAC/HEVC play (Spotify's stock build has none), and still minos 12.0. Chromium 151+
+      # needs macOS 13. The hash is the one OBS pins in its CMakePresets.json (obs-studio 33.0.1).
+      CEF_VERSION: "150.0.19+gcf60f42+chromium-150.0.7871.252"
+      CEF_URL: "https://cdn-fastly.obsproject.com/downloads/cef_binary_7871_macos_arm64.tar.xz"
+      CEF_SHA256: "0343233fc462384c2f1f58a4222028bc6171f05948a822241f89df2faa7cee8d"
       MACOSX_DEPLOYMENT_TARGET: "12.6"
     steps:
       - uses: actions/checkout@v4
@@ -30,9 +34,21 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: vendor/cef
-          key: cef-150.0.21-macosarm64-12.6
+          key: cef-obs-7871-${{ env.CEF_SHA256 }}-macosarm64-12.6
 
-      - name: Fetch and build CEF 150 wrapper
+      - name: Fetch OBS's CEF 150 (with codecs)
+        if: steps.cef-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          rm -rf vendor/cef && mkdir -p vendor/cef
+          curl -fsSL "$CEF_URL" -o cef.tar.xz
+          echo "$CEF_SHA256  cef.tar.xz" | shasum -a 256 -c -
+          tar -xJf cef.tar.xz -C vendor/cef   # OBS's archive has no top-level folder
+          rm cef.tar.xz
+          grep -q "\"$CEF_VERSION\"" vendor/cef/include/cef_version.h
+          echo "$CEF_URL" > vendor/cef/.cra-source   # fetch-cef.sh then keeps it and only builds the wrapper
+
+      - name: Build CEF 150 wrapper
         if: steps.cef-cache.outputs.cache-hit != 'true'
         run: scripts/fetch-cef.sh
 
@@ -41,7 +57,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: vendor/cef
-          key: cef-150.0.21-macosarm64-12.6
+          key: cef-obs-7871-${{ env.CEF_SHA256 }}-macosarm64-12.6
 
       - name: Restore SwiftPM build cache
         uses: actions/cache/restore@v4
