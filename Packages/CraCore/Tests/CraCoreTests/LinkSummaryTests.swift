@@ -50,7 +50,7 @@ struct LinkSummaryTests {
         #expect(LinkSummaryPolicy.mayOpen(page: hn, shiftHeld: false))
         #expect(!LinkSummaryPolicy.mayOpen(page: u("https://example.com/"), shiftHeld: false))
         #expect(LinkSummaryPolicy.mayOpen(page: u("https://example.com/"), shiftHeld: true))
-        #expect(LinkSummaryPolicy.rest == .seconds(1))
+        #expect(LinkSummaryPolicy.rest == 1)
     }
 
     @Test func smallCardShowsTheAddressWithoutScheme() {
