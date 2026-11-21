@@ -3260,7 +3260,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         case "openLibrary": main.toggleLibrary()
         case "viewArchive": main.showLibrary(.archive)
         case "viewDownloads": main.showLibrary(.downloads)
-        case "viewMedia": main.showLibrary(.media)
+        // No Media page on the macOS 12 build (LibraryPage.railPages): its command opens Downloads.
+        case "viewMedia": main.showLibrary(.downloads)
         case "viewEasels": main.showLibrary(.easels)
         case "viewBoosts": main.showLibrary(.boosts)
         case "goBack": main.goBack()
@@ -3580,7 +3581,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         window.addItem(std("Minimize Window", #selector(NSWindow.performMiniaturize(_:)), "m", beforePage: true))
         window.addItem(std("Zoom", #selector(NSWindow.performZoom(_:))))
         window.addItem(.separator())
-        window.addItem(item("openLibrary")); window.addItem(item("viewDownloads")); window.addItem(item("viewEasels")); window.addItem(item("viewMedia")); window.addItem(item("viewBoosts"))
+        window.addItem(item("openLibrary")); window.addItem(item("viewDownloads")); window.addItem(item("viewEasels")); window.addItem(item("viewBoosts"))
         window.addItem(.separator())
         window.addItem(item("littleWindowOpenInMenu")); window.addItem(item("closeLittleWindows"))
         window.addItem(.separator())

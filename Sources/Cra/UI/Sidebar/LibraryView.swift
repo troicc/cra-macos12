@@ -7,6 +7,11 @@ import UniformTypeIdentifiers
 enum LibraryPage: String, CaseIterable {
     case media, downloads, easels, spaces, boosts, archive
 
+    /// The pages the rail offers. The macOS 12 build leaves Media out (turned off by its user,
+    /// 21 Nov 2026): it read the Mac's picture folders and its grid wouldn't scroll there. Its
+    /// menu item and command go to Downloads instead (AppDelegate's viewMedia).
+    static let railPages: [LibraryPage] = allCases.filter { $0 != .media }
+
     var title: String {
         switch self {
         case .media: "Media"
@@ -178,7 +183,8 @@ private final class LibraryRailView: NSView {
         wash.endPoint = CGPoint(x: 1, y: 0.5)
         layer?.addSublayer(wash)
         layer?.addSublayer(hairline)
-        for p in LibraryPage.allCases {
+        CraLog.note("library rail: \(LibraryPage.railPages.map(\.rawValue).joined(separator: " "))")
+        for p in LibraryPage.railPages {
             let b = LibraryRailButton(page: p)
             b.onPress = { [weak self] in self?.onPick(p) }
             b.menuProvider = { [weak self] in self?.pageMenu(p) }

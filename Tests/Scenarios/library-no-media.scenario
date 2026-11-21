@@ -1,0 +1,10 @@
+# The macOS 12 build has no Media page in the Library (turned off by its user, 21 Nov 2026): the rail
+# offers Downloads, Easels, Spaces, Boosts and Archived Tabs, and View Media… opens Downloads, so the
+# Mac's picture folders are never read.
+budget rss=700 stalls50=10
+cra://debug?windowSize=1280x800
+cra://action/viewMedia
+expect-log library rail: downloads easels spaces boosts archive$
+wait 1
+cra://debug?themeShown=media
+expect-log Cra theme shown media: .* library=downloads

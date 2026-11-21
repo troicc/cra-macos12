@@ -304,8 +304,9 @@ final class KeyBindingRegistry {
             KeyAction(id: "viewBoosts", name: "View Boosts…", section: .window, shortcuts: [], triggers: ["boosts"]),
             // Arc: Window ▸ View Easels….
             KeyAction(id: "viewEasels", name: "View Easels…", section: .window, shortcuts: [], triggers: ["easels"]),
-            // Arc: Window ▸ View Media….
-            KeyAction(id: "viewMedia", name: "View Media…", section: .window, shortcuts: [], triggers: ["media", "screenshots", "photos"]),
+            // Arc: Window ▸ View Media…. Kept for saved key bindings, out of the command bar: the macOS 12
+            // build has no Media page (LibraryPage.railPages).
+            KeyAction(id: "viewMedia", name: "View Media…", section: .window, shortcuts: [], triggers: ["media", "screenshots", "photos"], inCommandBar: false),
             // Arc: Window ▸ Stay On Top.
             KeyAction(id: "stayOnTop", name: "Stay On Top", section: .window, shortcuts: [], triggers: ["stay on top", "float", "always on top", "pin window"]),
             // Arc's Tabs ▸ "Open Little Arc or Peek in" (openTabIn), the Little Arc's "Open in <space>" button;
