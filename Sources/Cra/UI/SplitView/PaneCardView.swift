@@ -142,9 +142,25 @@ final class PaneCardView: NSView {
     override var isHidden: Bool { didSet { syncShadow() } }
 
     /// What the card draws behind its page, or in place of one: the white veil and its shadow.
+    /// `shadow=1` only while the whole shadow can be seen: a view it sits in that clips to its
+    /// bounds cuts it off at the card's own square edge, leaving dark wedges in the four corners
+    /// between the card's rounded edge and that square (macOS 12, where a layer-backed view
+    /// clips what it holds unless told not to).
     var backgroundReadout: String {
         let veil = layer?.backgroundColor.flatMap { NSColor(cgColor: $0)?.alphaComponent } ?? 0
-        return String(format: "veil=%.2f shadow=%d", veil, shadowView.isHidden ? 0 : 1)
+        return String(format: "veil=%.2f shadow=%d", veil, shadowView.isHidden || shadowIsClipped ? 0 : 1)
+    }
+
+    /// Whether a view the shadow sits in clips it short of its full frame. The window's own edge
+    /// (its content view) is left out: the card's inset there is narrower than the shadow's reach.
+    private var shadowIsClipped: Bool {
+        var view = shadowView.superview
+        while let v = view, v !== window?.contentView {
+            if v.compatClipsToBounds || v.layer?.masksToBounds == true,
+               !v.bounds.contains(v.convert(shadowView.bounds, from: shadowView)) { return true }
+            view = v.superview
+        }
+        return false
     }
 
     private func syncShadow() {

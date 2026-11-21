@@ -404,6 +404,11 @@ final class ShellView: NSView {
         addSubview(backgroundHost)
         contentContainer.wantsLayer = true
         contentContainer.layer?.backgroundColor = NSColor.clear.cgColor
+        // The cards' shadows (CardShadowView) reach past the container, which is the card's own
+        // size with one pane. macOS 14+ doesn't clip a view's contents; macOS 12 does, which cut
+        // each shadow off at the card's square edge and left it only in the four corners outside
+        // the rounded edge: a square frame around the rounded card.
+        contentContainer.compatClipsToBounds = false
         addSubview(contentContainer)
         addSubview(loadingIndicator)
         parkingView.isHidden = true

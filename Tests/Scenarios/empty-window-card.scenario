@@ -1,7 +1,9 @@
 # promise: #483
 # A window with no tab shows Arc's white card in the page card's inset, with the page card's shadow,
 # beside the docked sidebar and beside the hidden one held open over the window (CraCore CardVeil
-# holds the veil for light and dark). A tab takes the card's place.
+# holds the veil for light and dark). A tab takes the card's place. shadow=1 also means nothing the
+# card sits in clips the shadow: on macOS 12 the card's container cut it to the card's square edge,
+# leaving it only in the corners outside the rounded edge (a square frame around the card).
 budget rss=700 stalls50=10
 cra://debug?windowSize=1280x800
 cra://open?url=${PAGE}?n=card
