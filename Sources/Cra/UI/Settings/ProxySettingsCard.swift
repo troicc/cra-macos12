@@ -67,7 +67,7 @@ struct ProxySettingsCard: View {
             if let error {
                 SettingsFootnote(error).foregroundStyle(.red).padding(.top, 6)
             } else {
-                SettingsFootnote("When the proxy is down, pages fail instead of loading without it. WebRTC keeps to the proxy too. HTTP and HTTPS proxies can have a user name and password, kept in your Keychain; Chromium can’t sign in to SOCKS proxies.")
+                SettingsFootnote("When the proxy is down, pages fail instead of loading without it. WebRTC keeps to the proxy too. An HTTP or HTTPS proxy’s user name and password stay in your Keychain: Cra signs the profile in with them, so pages don’t ask. Chromium can’t sign in to SOCKS proxies.")
                     .padding(.top, 6)
             }
         }

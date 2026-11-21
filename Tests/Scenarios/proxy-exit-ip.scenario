@@ -51,12 +51,28 @@ wait 1
 cra://debug?exitIP=show
 expect-log exit ip Default: known 203\.0\.113\.7
 
-# A proxy that asks for a password gets the profile's.
+# A proxy that asks for a password. Pages' challenges go to Chrome's own sign-in prompt in Chrome-style
+# CEF, but Cra's own request through the profile (the exit IP lookup) signs in with the saved password,
+# and Chromium's proxy sign-in cache is the profile's: the page goes straight through, no prompt.
 cra://debug?proxy=${ORIGIN}&proxyUser=cra:fixture
 expect-log proxy now: http://127\.0\.0\.1:[0-9]+
+cra://debug?exitIPURL=http://exit-ip.auth.test/json
+expect-log "GET http://exit-ip\.auth\.test/json HTTP/1\.1" 407
+expect-log "GET http://exit-ip\.auth\.test/json HTTP/1\.1" 200
 cra://open?url=http://cra.auth.test/
-expect-log "GET http://cra\.auth\.test/ HTTP/1\.1" 407
 expect-log "GET http://cra\.auth\.test/ HTTP/1\.1" 200
+reject-log "GET http://cra\.auth\.test/ HTTP/1\.1" 407
+# Without the exit IP shown or the time zone matched, a password still signs pages in. The same server
+# as localhost is another proxy to Chromium, with nothing in its sign-in cache yet.
+cra://debug?matchTimeZone=off
+cra://debug?exitIPMenu=off
+cra://debug?proxy=${WEBKIT}&proxyUser=cra:fixture
+expect-log proxy now: http://localhost:[0-9]+
+expect-log proxy: signed in for Default \(HTTP 200\)
+cra://open?url=http://cra2.auth.test/
+expect-log "GET http://cra2\.auth\.test/ HTTP/1\.1" 200
+reject-log "GET http://cra2\.auth\.test/ HTTP/1\.1" 407
+cra://debug?matchTimeZone=on
 
 # A proxy that is down fails the page: nothing goes around it.
 cra://debug?proxy=http://127.0.0.1:9

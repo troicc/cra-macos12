@@ -1717,7 +1717,9 @@ public:
         [o applyTimeZoneOverride];
     }
 
-    // A proxy that asks for a user name and password (407): the ones saved for the profile.
+    // A proxy that asks for a user name and password (407): the ones saved for the profile. Chrome-style
+    // CEF asks here only without a page (ChromeContentBrowserClientCef::CreateLoginDelegate); pages get
+    // Chrome's own sign-in prompt, which Cra keeps for sites too (#574).
     bool GetAuthCredentials(CefRefPtr<CefBrowser> browser, const CefString& origin_url, bool isProxy, const CefString& host, int port,
                             const CefString& realm, const CefString& scheme, CefRefPtr<CefAuthCallback> callback) override {
         if (!isProxy) return false;

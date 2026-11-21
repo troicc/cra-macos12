@@ -105,6 +105,8 @@ final class NetworkPrivacy {
     @PerceptionIgnored private var systemProxyTimer: ScheduledWork?
     @PerceptionIgnored private var failures: [String: Int] = [:]
     @PerceptionIgnored private var inFlight: Set<String> = []
+    /// Profiles whose proxy password Chromium has been given since their proxy last changed.
+    @PerceptionIgnored private var signedIn: Set<String> = []
     @PerceptionIgnored private var menuItem: ExitIPMenuItem?
     /// The profile of the space in front (nil is Default); set by AppDelegate.
     @PerceptionIgnored var frontProfile: () -> String? = { nil }
@@ -141,6 +143,8 @@ final class NetworkPrivacy {
         CraCEFRuntime.setProxyChangeHandler {
             MainActor.assumeIsolated {
                 NetworkPrivacy.shared.proxyGeneration += 1
+                NetworkPrivacy.shared.signedIn.removeAll()
+                NetworkPrivacy.shared.signInLoadedProfiles()
                 NetworkPrivacy.shared.checkAll()
             }
         }
@@ -162,6 +166,7 @@ final class NetworkPrivacy {
     }
 
     private func pollSystemProxy() {
+        signInLoadedProfiles()
         let on = Self.readSystemProxy()
         guard on != systemProxyOn else { return }
         systemProxyOn = on
@@ -203,6 +208,31 @@ final class NetworkPrivacy {
         case .direct: return "direct"
         case .server(let s): return s.scheme.rawValue
         case .other: return "other"
+        }
+    }
+
+    // MARK: Proxy sign-in
+
+    /// Chrome-style CEF gives a page's proxy challenge to Chrome's own sign-in prompt, not to Cra
+    /// (ChromeContentBrowserClientCef::CreateLoginDelegate). Chromium's proxy sign-in cache is the
+    /// profile's, though, so one request of Cra's own through the profile (the exit IP lookup, which
+    /// reaches GetAuthCredentials) signs every page in, and they never see the prompt. Done for each
+    /// loaded profile with a saved password, once per proxy change; pages restored at launch before
+    /// it answers may still ask.
+    func signInLoadedProfiles() {
+        for path in loadedProfiles where !signedIn.contains(Self.key(path)) { signIn(path) }
+    }
+
+    private func signIn(_ path: String?) {
+        guard case .server(let server) = proxy(profilePath: path),
+              ProxyCredentialStore.shared.hasCredentials(profilePath: path, server: server),
+              let store, let url = ExitIPLookup.url(store.settings.exitIPLookupURL) else { return }
+        signedIn.insert(Self.key(path))
+        if checking { check(path); return }
+        CraCEFRuntime.fetchURL(url.absoluteString, headers: ["Accept": "application/json"], profilePath: path) { status, _, _, _ in
+            MainActor.assumeIsolated {
+                CraLog.note("proxy: signed in for \(path.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "Default") (HTTP \(status))")
+            }
         }
     }
 
