@@ -50,6 +50,7 @@
 #                               Alerts helper for a notification click after it quit; fails unless it exits 0 in 10 s
 #   requires screen
 #   port <n>                   serve ${PAGE} on a fixed port (snapshots show the address)
+# Set as a profile's proxy (cra://debug?proxy=${ORIGIN}), the fixture server is an HTTP proxy too: see do_GET.
 # The fixture server answers an address with ?delay=<s> (or &delay=<s>) that many seconds late, and /auth with an
 # HTTP sign-in (401 Basic) until the browser sends a user name and password.
 # ${FIXTURES}, ${ORIGIN} (that server's http://127.0.0.1:<port>, which also answers a POST with 204,
@@ -163,6 +164,33 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     # ?delay=<s> anywhere in the address: the answer (a page, or a 404) comes that many seconds late.
     def do_GET(self):
         import base64, html, re, time
+        # An absolute address is a request to a proxy (Settings ▸ Profiles ▸ Proxy set to ${ORIGIN}): pages answer
+        # "via proxy <host>", exit-ip.* answers like ipinfo.io with a Tokyo address, and *.auth.test wants the
+        # proxy user cra:fixture (407 until the browser sends it).
+        if self.path.startswith("http://"):
+            import json, urllib.parse
+            host = urllib.parse.urlsplit(self.path).hostname or ""
+            if host.endswith(".auth.test"):
+                sent = self.headers.get("Proxy-Authorization", "")
+                if not sent.startswith("Basic ") or base64.b64decode(sent[6:]).decode("utf-8", "replace") != "cra:fixture":
+                    self.send_response(407)
+                    self.send_header("Proxy-Authenticate", "Basic realm=\"Cra proxy\"")
+                    self.send_header("Content-Length", "0")
+                    self.end_headers()
+                    return
+            if host.startswith("exit-ip."):
+                body = json.dumps({"ip": "203.0.113.7", "city": "Tokyo", "region": "Tokyo", "country": "JP", "loc": "35.6895,139.6917",
+                                   "org": "AS64500 Cra fixture", "timezone": "Asia/Tokyo"}).encode()
+                kind = "application/json"
+            else:
+                body = f"<title>via proxy {html.escape(host)}</title>proxied".encode()
+                kind = "text/html"
+            self.send_response(200)
+            self.send_header("Content-Type", kind)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         # /auth: a page behind a user name and password (HTTP Basic), as a router or an intranet asks for one:
         # 401 until the browser sends credentials, then a page titled with the user it signed in as.
         if self.path.startswith("/auth"):

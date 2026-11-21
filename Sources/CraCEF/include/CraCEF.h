@@ -452,6 +452,23 @@ CRA_EXPORT @interface CraCEFRuntime : NSObject
 /// Chromium noises canvas, WebGL and offline-audio readback and reports 8 cores, with a seed per
 /// site, profile and launch. Profiles that load later get it too. Off until enabled.
 + (void)setFingerprintingProtectionEnabled:(BOOL)enabled;
+/// Decides each profile's `webrtc.ip_handling_policy` from its effective `proxy` pref, given as
+/// JSON (nil when unreadable); nil or empty keeps default_public_interface_only. Called on the main
+/// thread when a profile loads (before its first page), when its proxy changes, and on
+/// +refreshWebRTCPolicy. Behind a proxy, pages must not reach the network around it.
++ (void)setWebRTCPolicyResolver:(nullable NSString * _Nullable (^)(NSString * _Nullable proxyJSON))resolver;
+/// Every loaded profile's WebRTC policy decided again (macOS's proxy or a setting changed).
++ (void)refreshWebRTCPolicy;
+/// Called on the main queue after any loaded profile's `proxy` pref changed.
++ (void)setProxyChangeHandler:(nullable void (^)(void))handler;
+/// A proxy asked for a user name and password: return @[user, password] for the profile (nil is
+/// Default) and the proxy's host and port, or nil to leave it to Chrome's sign-in dialog. Called on
+/// any thread, Chromium's IO thread included: it must not touch the main thread's state.
++ (void)setProxyCredentialsHandler:(nullable NSArray<NSString *> * _Nullable (^)(NSString * _Nullable profilePath, NSString *host, NSInteger port))handler;
+/// The time zone pages of a profile see (Emulation.setTimezoneOverride on each page; Date, Intl
+/// and workers in the page's process follow). Nil or empty is the Mac's own. Not for incognito.
++ (void)setTimeZoneOverride:(nullable NSString *)timeZone forProfile:(nullable NSString *)profilePath;
++ (nullable NSString *)timeZoneOverrideForProfile:(nullable NSString *)profilePath;
 /// Arc's View ▸ Appearance ("Websites, Easels, and Notes will use:"): 0 Automatic (the Mac's),
 /// 1 Light, 2 Dark. Chrome's colour mode in every profile, which pages' prefers-color-scheme and
 /// Chrome's own pages follow; profiles that load later get it too.

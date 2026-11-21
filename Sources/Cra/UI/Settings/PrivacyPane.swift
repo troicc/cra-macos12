@@ -47,6 +47,34 @@ struct PrivacyPane: View {
             }
             if let dnsError { SettingsFootnote(dnsError).foregroundStyle(.red) }
 
+            // Not in Arc: where websites see this Mac come from (NetworkPrivacy). Each profile's
+            // proxy is under Settings ▸ Profiles.
+            SettingsHeader("Exit IP").padding(.top, 20)
+            SettingsFeatureCard {
+                SettingsToggleRow("Keep WebRTC behind the proxy",
+                                  detail: "Behind a proxy, Cra keeps WebRTC to it on its own, so calls and peer connections can’t show this Mac’s address. Turn this on for a proxy Cra can’t see, like one in your router. Calls that need UDP may then fail.",
+                                  isOn: $store.settings.webRTCAlwaysProxied)
+                SettingsCardDivider()
+                SettingsToggleRow("Show the exit IP in the menu bar",
+                                  detail: "The address websites see the space in front come from, with its country. Cra asks the service below through the space’s profile and proxy, once a minute and whenever the proxy changes. The service sees only the address every site sees.",
+                                  isOn: $store.settings.exitIPInMenuBar) {
+                    Picker("Lookup service", selection: $store.settings.exitIPLookupURL) {
+                        ForEach(0..<ExitIPLookup.services.count, id: \.self) { i in
+                            Text(ExitIPLookup.services[i].name).tag(ExitIPLookup.services[i].url)
+                        }
+                        if !ExitIPLookup.services.contains(where: { $0.url == store.settings.exitIPLookupURL }) {
+                            Text(store.settings.exitIPLookupURL).tag(store.settings.exitIPLookupURL)
+                        }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+                SettingsCardDivider()
+                SettingsToggleRow("Match the time zone to the exit IP",
+                                  detail: "Pages see the time zone of the address they come from instead of this Mac’s, so the clock doesn’t give the proxy away. Open pages change at once.",
+                                  isOn: $store.settings.matchTimeZoneToExitIP)
+            }
+
             SettingsHeader("Data").padding(.top, 20)
             SettingsFeatureCard {
                 SettingsPlainRow("Clear browsing data",

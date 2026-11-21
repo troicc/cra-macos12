@@ -89,3 +89,8 @@ jobs:
           name: Cra-macOS12-arm64
           path: Cra-macOS12-arm64.zip
           retention-days: 14
+
+      # After the upload, so a failing test still leaves the build to try. The proxy, WebRTC and
+      # exit IP decisions (ProxySettingTests, ExitIPTests) and the settings lists they join.
+      - name: CraCore tests (network privacy)
+        run: swift test --package-path Packages/CraCore --filter "ProxySettingTests|ExitIPTests|SharingTests|ModelFixtureTests"

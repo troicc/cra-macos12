@@ -1,0 +1,81 @@
+# Settings ▸ Profiles ▸ Proxy and Settings ▸ Privacy ▸ Exit IP (not in Arc). The fixture server doubles
+# as an HTTP proxy (scripts/scenario.sh): pages through it say "via proxy", exit-ip.test answers like
+# ipinfo.io with a Tokyo address and *.auth.test wants the proxy user cra:fixture.
+#
+# The leak this pins: behind a proxy, Chromium's WebRTC policy let a STUN request go out over UDP, around
+# the proxy, and the page read this Mac's real public address. Behind a proxy it is disable_non_proxied_udp.
+cra://open?url=${PAGE}
+expect-log loaded 127\.0\.0\.1 \(HTTP 200\)
+# No proxy (whatever this Mac's own settings): WebRTC only hides the local address.
+cra://debug?proxy=direct
+expect-log proxy now: No proxy
+cra://debug?pref=webrtc.ip_handling_policy
+expect-log pref webrtc\.ip_handling_policy: "default_public_interface_only"
+# Privacy ▸ "Keep WebRTC behind the proxy" holds it there without one.
+cra://debug?webRTCProxied=on
+wait 1
+cra://debug?pref=webrtc.ip_handling_policy
+expect-log pref webrtc\.ip_handling_policy: "disable_non_proxied_udp"
+cra://debug?webRTCProxied=off
+wait 1
+cra://debug?pref=webrtc.ip_handling_policy
+expect-log pref webrtc\.ip_handling_policy: "default_public_interface_only"
+
+# A proxy: WebRTC keeps to it at once, and pages go through it (loopback, ${PAGE}, still goes around).
+cra://debug?proxy=${ORIGIN}
+expect-log proxy now: http://127\.0\.0\.1:[0-9]+
+cra://debug?pref=webrtc.ip_handling_policy
+expect-log pref webrtc\.ip_handling_policy: "disable_non_proxied_udp"
+cra://debug?pref=proxy
+expect-log pref proxy: .*"mode":"fixed_servers"
+cra://open?url=http://cra-proxy.test/
+expect-log "GET http://cra-proxy\.test/ HTTP/1\.1" 200
+
+# The exit address, asked through the profile and so through its proxy, and its time zone for pages.
+cra://debug?exitIPURL=http://exit-ip.test/json
+cra://debug?matchTimeZone=on
+expect-log "GET http://exit-ip\.test/json HTTP/1\.1" 200
+wait 1
+cra://debug?exitIP=show
+expect-log exit ip Default: known 203\.0\.113\.7 JP Asia/Tokyo tz=Asia/Tokyo
+cra://debug?cdp=Runtime.evaluate&params={"expression":"'tz:'.concat(Intl.DateTimeFormat().resolvedOptions().timeZone)"}
+expect-log Cra cdp Runtime.evaluate .*"value":"tz:Asia/Tokyo"
+# A page opened now gets it before its scripts run.
+cra://open?url=http://cra-proxy.test/new
+expect-log "GET http://cra-proxy\.test/new HTTP/1\.1" 200
+wait 1
+cra://debug?cdp=Runtime.evaluate&params={"expression":"'tz new:'.concat(Intl.DateTimeFormat().resolvedOptions().timeZone)"}
+expect-log Cra cdp Runtime.evaluate .*"value":"tz new:Asia/Tokyo"
+cra://debug?exitIPMenu=on
+wait 1
+cra://debug?exitIP=show
+expect-log exit ip Default: known 203\.0\.113\.7
+
+# A proxy that asks for a password gets the profile's.
+cra://debug?proxy=${ORIGIN}&proxyUser=cra:fixture
+expect-log proxy now: http://127\.0\.0\.1:[0-9]+
+cra://open?url=http://cra.auth.test/
+expect-log "GET http://cra\.auth\.test/ HTTP/1\.1" 407
+expect-log "GET http://cra\.auth\.test/ HTTP/1\.1" 200
+
+# A proxy that is down fails the page: nothing goes around it.
+cra://debug?proxy=http://127.0.0.1:9
+expect-log proxy now: http://127\.0\.0\.1:9
+cra://open?url=http://cra-proxy.test/closed
+expect-log failed to load: net error -130
+reject-log "GET http://cra-proxy\.test/closed
+# Two failed checks in a row say so, with the last address kept.
+cra://debug?exitIP=check
+wait 2
+cra://debug?exitIP=check
+wait 2
+cra://debug?exitIP=show
+expect-log exit ip Default: failed last=203\.0\.113\.7
+
+# Off again: pages get the Mac's own time zone.
+cra://debug?matchTimeZone=off
+wait 1
+cra://debug?exitIP=show
+expect-log exit ip Default: .* tz=-
+cra://debug?proxy=system
+expect-log proxy now: Use macOS proxy settings

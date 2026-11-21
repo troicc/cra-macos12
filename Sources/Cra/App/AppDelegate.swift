@@ -280,6 +280,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         observeChanges(of: { [store] in store.settings.soundEffects }) { CaptureSound.enabled = $0 }
         observeLinkMenu()
         logSecureDNS()
+        startNetworkPrivacy()
+    }
+
+    /// Settings ▸ Profiles ▸ Proxy and Settings ▸ Privacy ▸ Exit IP (NetworkPrivacy): the menu bar's
+    /// address follows the space in front.
+    private func startNetworkPrivacy() {
+        let privacy = NetworkPrivacy.shared
+        privacy.frontProfile = { [unowned self] in self.frontProfilePath() }
+        privacy.openPrivacySettings = { [unowned self] in self.showSettingsWindow(on: .privacy) }
+        privacy.start(clock: composition.clock)
+        observeChanges(of: { [unowned self] in self.frontProfilePath() }) { _ in NetworkPrivacy.shared.frontChanged() }
+    }
+
+    private func frontProfilePath() -> String? {
+        guard let window = mainWindows.first(where: { $0.windowID == store.activeWindowID }) ?? mainWindows.first else { return nil }
+        return store.profilePath(space: window.focusedSpaceID)
     }
 
     /// A sidebar whose links disagree (SidebarIntegrity) says so in the log, one fault a problem.
@@ -2269,6 +2285,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             }
             // Settings ▸ Privacy ▸ Fingerprinting protection on or off, as its switch sets it.
             if let v = dict["fingerprinting"] { store.settings.fingerprintingProtection = v == "on"; return }
+            // Settings ▸ Profiles ▸ Proxy for the front space's profile, as its Apply button sets it:
+            // proxy=system|direct|<address>[&proxyUser=<user>:<password>] (a password stays in memory, never the Keychain).
+            if let v = dict["proxy"] {
+                let path = store.profilePath(space: main.focusedSpaceID)
+                let setting: ProxySetting
+                var credentials: ProxyCredentials?
+                switch v {
+                case "system": setting = .system
+                case "direct": setting = .direct
+                default:
+                    switch ProxySetting.parse(v) {
+                    case .invalid(let why): CraLog.note("proxy refused: \(why)"); return
+                    case .server(let server, let c): setting = .server(server); credentials = c
+                    }
+                    // proxyUser=<user>:<password> beside it, for an address that can't carry them (${ORIGIN}).
+                    if let pair = dict["proxyUser"]?.split(separator: ":", maxSplits: 1), pair.count == 2 {
+                        credentials = ProxyCredentials(user: String(pair[0]), password: String(pair[1]))
+                    }
+                }
+                let ok = NetworkPrivacy.shared.setProxy(setting, credentials: credentials, profilePath: path, persistCredentials: false)
+                CraLog.note("proxy now: \(ok ? NetworkPrivacy.shared.proxy(profilePath: path).summary : "unchanged")")
+                return
+            }
+            // pref=<name>: a pref of the front space's profile as Chromium holds it (webrtc.ip_handling_policy, proxy).
+            if let name = dict["pref"] {
+                let path = store.profilePath(space: main.focusedSpaceID)
+                CraLog.note("pref \(name): \(CraCEFRuntime.preference(name, forProfile: path) ?? "none")")
+                return
+            }
+            // Settings ▸ Privacy ▸ Exit IP: exitIP=check|show, exitIPMenu=on|off, exitIPURL=<address>,
+            // matchTimeZone=on|off, webRTCProxied=on|off.
+            if let v = dict["exitIP"] {
+                let path = store.profilePath(space: main.focusedSpaceID)
+                if v == "check" { NetworkPrivacy.shared.check(path) } else { CraLog.note(NetworkPrivacy.shared.debugDescription(profilePath: path)) }
+                return
+            }
+            if let v = dict["exitIPMenu"] { store.settings.exitIPInMenuBar = v == "on"; return }
+            if let v = dict["exitIPURL"] { store.settings.exitIPLookupURL = v; return }
+            if let v = dict["matchTimeZone"] { store.settings.matchTimeZoneToExitIP = v == "on"; return }
+            if let v = dict["webRTCProxied"] { store.settings.webRTCAlwaysProxied = v == "on"; return }
             // Settings ▸ Privacy without the pointer (#507): blockLists=<address,…>|none sets the added
             // block lists, blockAds=on|off the switch they sit under.
             if let v = dict["blockLists"] { store.settings.customBlocklists = v == "none" ? [] : v.split(separator: ",").map(String.init); return }

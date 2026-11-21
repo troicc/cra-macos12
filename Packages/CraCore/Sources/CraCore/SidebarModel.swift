@@ -660,6 +660,17 @@ public struct AppSettings: Codable, Equatable {
     /// faint noise to what pages read back from canvas, WebGL and offline audio, and reports 8
     /// processor cores, with a seed per site, profile and launch (fingerprinting-protection.patch).
     public var fingerprintingProtection: Bool = false
+    /// Privacy ▸ "Keep WebRTC behind the proxy" (not in Arc, off): WebRTC never uses UDP outside a
+    /// proxy, even when Cra sees none (WebRTCIPHandling). Behind a proxy Cra does that anyway.
+    public var webRTCAlwaysProxied: Bool = false
+    /// Privacy ▸ "Show the exit IP in the menu bar" (not in Arc, off): the address websites see the
+    /// current space's profile come from, checked through that profile (ExitIPInfo).
+    public var exitIPInMenuBar: Bool = false
+    /// Where that check asks (ExitIPLookup.services).
+    public var exitIPLookupURL: String = ExitIPLookup.defaultURL
+    /// Privacy ▸ "Match the time zone to the exit IP" (not in Arc, off): pages see the exit
+    /// address's time zone instead of the Mac's (ExitTimeZone).
+    public var matchTimeZoneToExitIP: Bool = false
     /// Arc's View ▸ Appearance: what websites see as the colour scheme.
     public var websiteAppearance: WebsiteAppearance = .automatic
     /// Arc's Settings ▸ Advanced "Play Arc sound effects" (the capture shutter), on by default.
@@ -1000,6 +1011,10 @@ extension AppSettings {
         keepActiveSites = (try? c.decodeIfPresent([KeepActiveSite].self, forKey: .keepActiveSites)) ?? []
         httpsOnly = try c.decodeIfPresent(Bool.self, forKey: .httpsOnly) ?? false
         fingerprintingProtection = try c.decodeIfPresent(Bool.self, forKey: .fingerprintingProtection) ?? false
+        webRTCAlwaysProxied = try c.decodeIfPresent(Bool.self, forKey: .webRTCAlwaysProxied) ?? false
+        exitIPInMenuBar = try c.decodeIfPresent(Bool.self, forKey: .exitIPInMenuBar) ?? false
+        exitIPLookupURL = (try? c.decodeIfPresent(String.self, forKey: .exitIPLookupURL)).flatMap { ExitIPLookup.url($0) != nil ? $0 : nil } ?? ExitIPLookup.defaultURL
+        matchTimeZoneToExitIP = try c.decodeIfPresent(Bool.self, forKey: .matchTimeZoneToExitIP) ?? false
         websiteAppearance = (try? c.decodeIfPresent(WebsiteAppearance.self, forKey: .websiteAppearance)) ?? .automatic
         soundEffects = try c.decodeIfPresent(Bool.self, forKey: .soundEffects) ?? true
         mediaLibraryEnabled = try c.decodeIfPresent(Bool.self, forKey: .mediaLibraryEnabled) ?? false

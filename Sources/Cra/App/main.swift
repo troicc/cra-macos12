@@ -68,6 +68,8 @@ MainActor.assumeIsolated {
                                      preferredLanguages: Locale.preferredLanguages)
     CraLog.note("chromium locale: \(locale ?? "en-US (default)") for \(Locale.preferredLanguages.prefix(3).joined(separator: ","))")
     let useChromeStyle = ProcessInfo.processInfo.environment["CRA_CHROME_STYLE"] == "1"
+    // The WebRTC policy and proxy sign-in, before the first profile loads (Settings ▸ Profiles ▸ Proxy).
+    NetworkPrivacy.shared.install(store: delegate.store)
     let started = CraCEFRuntime.initialize(withCachePath: AppPaths.chromiumCache.path,
                                            userAgentProduct: "",
                                            logPath: AppPaths.log.path,

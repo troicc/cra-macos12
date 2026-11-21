@@ -149,6 +149,10 @@ struct ProfilesPane: View {
             }
             .padding(.top, 9)
 
+            // Not in Arc: the profile's proxy (Chromium's `proxy` pref, per profile).
+            SettingsHeader("Network").padding(.top, 14)
+            ProxySettingsCard(profilePath: path)
+
             SettingsHeader("Your Data and Settings").padding(.top, 14)
             SettingsCard {
                 ForEach(Array(Self.dataPages.enumerated()), id: \.offset) { i, page in WithPerceptionTracking {

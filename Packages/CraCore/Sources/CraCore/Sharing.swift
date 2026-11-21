@@ -177,7 +177,7 @@ public struct UsageStats: Codable, Equatable, Sendable {
         "sharedFavorites", "showSpaceHeaderOnSingleSpace", "showStatusBar", "showToolbar", "soundEffects", "splitMiddleClickAddsPane", "splitMorePanes",
         "startOnNewTab", "tabSleepAfter", "tabSleepOnMemoryPressure", "tabSleepTimerEnabled", "tidyDownloads",
         "tidyTabTitles", "tidyTabs", "toolbarShowsFullURL", "warnBeforeQuitting", "websiteAppearance",
-        "allowAppleEventsJavaScript", "perfHidesSiteNames",
+        "allowAppleEventsJavaScript", "perfHidesSiteNames", "webRTCAlwaysProxied", "exitIPInMenuBar", "matchTimeZoneToExitIP",
     ]
 
     /// Lists, folders, sites and one-time marks: never in a report. Sharing itself is always on
@@ -187,7 +187,7 @@ public struct UsageStats: Codable, Equatable, Sendable {
         "developerHosts", "disabledDefaultDeveloperHosts", "autoPictureInPictureSites", "keepActiveSites", "linkRoutes", "mediaFolders", "mediaHidden",
         "downloadLocations", "newDocumentApps", "hasSeenImportPrompt", "toolbarDefaultMigrated", "newTabButtonDefaultMigrated",
         "autoArchiveDays", "shareUsageStats", "askedToShare", "autoHideToolbar", "autoHideLittleWindowToolbar", "autoHidePeekToolbar",
-        "commandBarSiteColor", "sidebarSide", "customBlocklists",
+        "commandBarSiteColor", "sidebarSide", "customBlocklists", "exitIPLookupURL",
     ]
 
     public static func changedSettings(_ settings: AppSettings) -> [String: String] {

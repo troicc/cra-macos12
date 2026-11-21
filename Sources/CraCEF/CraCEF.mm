@@ -159,6 +159,9 @@ static std::string ChromiumLabel(int ids, const char* fallback) {
 /// Page.addScriptToEvaluateOnNewDocument params every page browser gets once it exists
 /// (the page's world, then Cra's isolated world).
 static NSArray<NSString*>* g_documentStartParams = nil;
+/// +setTimeZoneOverride:forProfile:, by profile path ("" is Default).
+static NSMutableDictionary<NSString*, NSString*>* g_timeZoneOverrides = nil;
+static NSString* TimeZoneOverrideKey(NSString* profilePath) { return profilePath.length ? profilePath : @""; }
 
 /// Removes separators a removed item left at either end or next to another one. Hidden items
 /// don't count: Chrome's model keeps some it doesn't show.
@@ -240,6 +243,10 @@ static CraClient* AsCraClient(CefClient* c) {
 @property (nonatomic) BOOL hasUncontrollableSound;
 - (void)audibleChanged:(BOOL)audible;
 - (void)requestPictureInPictureInFrame:(CefRefPtr<CefFrame>)frame automatic:(BOOL)automatic x:(int)x y:(int)y;
+/// The time zone +setTimeZoneOverride:forProfile: gives this page's profile, sent again on each
+/// main-frame load (Chromium keeps one override per renderer process, see below).
+- (void)applyTimeZoneOverride;
+@property (nonatomic) BOOL timeZoneOverridden;
 /// The key press that lends the page user activation, for a frame that has a video to show.
 - (void)nudgeUserActivation;
 - (void)adoptBrowser:(CefRefPtr<CefBrowser>)browser;
@@ -518,11 +525,26 @@ static NSString* ManagedAuthServerAllowlist() {
     return nil;
 }
 
+/// Decides the policy from the context's effective `proxy` pref (CraCore's WebRTCIPHandling).
+static NSString* (^g_webRTCPolicyResolver)(NSString*) = nil;
+
 /// Before any page loads: with mDNS off, the default policy would hand pages
-/// the real local IP. Pages get the public address STUN reports and nothing else.
+/// the real local IP. Pages get the public address STUN reports and nothing else, or, behind a
+/// proxy, nothing outside the proxy: UDP never goes through an HTTP or SOCKS proxy, so a STUN
+/// answer would carry this Mac's real public address (disable_non_proxied_udp).
 static void ApplyWebRTCPolicy(CefRefPtr<CefRequestContext> context) {
+    if (!context) return;
+    std::string decided = "default_public_interface_only";
+    if (g_webRTCPolicyResolver) {
+        CefRefPtr<CefValue> proxy = context->GetPreference("proxy");
+        NSString* json = proxy ? NSStringFromCef(CefWriteJSON(proxy, JSON_WRITER_DEFAULT)) : nil;
+        NSString* policy = g_webRTCPolicyResolver(json);
+        if (policy.length) decided = policy.UTF8String;
+    }
+    CefRefPtr<CefValue> current = context->GetPreference("webrtc.ip_handling_policy");
+    if (current && current->GetType() == VTYPE_STRING && current->GetString().ToString() == decided) return;
     CefRefPtr<CefValue> policy = CefValue::Create();
-    policy->SetString("default_public_interface_only");
+    policy->SetString(decided);
     CefString error;
     if (!context->SetPreference("webrtc.ip_handling_policy", policy, error)) {
         NSLog(@"CraCEF: webrtc.ip_handling_policy: %s", error.ToString().c_str());
@@ -583,9 +605,48 @@ static void ApplyFingerprintingProtection(CefRefPtr<CefRequestContext> context) 
     }
 }
 
+/// Every loaded profile's WebRTC policy decided again: a profile's proxy, macOS's proxy or
+/// Privacy ▸ "Keep WebRTC behind the proxy" changed.
+static void RefreshWebRTCPolicyEverywhere() {
+    if (!g_contextInitialized || g_quitting) return;
+    ApplyWebRTCPolicy(CefRequestContext::GetGlobalContext());
+    for (auto& [path, context] : g_profileContexts) {
+        if ([g_readyProfiles containsObject:@(path.c_str())]) ApplyWebRTCPolicy(context);
+    }
+    if (g_incognitoContext && g_incognitoReady) ApplyWebRTCPolicy(g_incognitoContext);
+}
+
+static void (^g_proxyChangeHandler)(void) = nil;
+static bool g_proxyChangePending = false;
+
+/// A profile's `proxy` changed (Settings ▸ Profiles, chrome.proxy, an extension turned on or
+/// off): WebRTC follows before anything else runs, then Cra hears of it (the exit IP check).
+class ProxyPrefObserver : public CefPreferenceObserver {
+public:
+    void OnPreferenceChanged(const CefString& name) override {
+        RefreshWebRTCPolicyEverywhere();
+        if (!g_proxyChangeHandler || g_proxyChangePending || g_quitting) return;
+        g_proxyChangePending = true;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            g_proxyChangePending = false;
+            if (g_proxyChangeHandler && !g_quitting) g_proxyChangeHandler();
+        });
+    }
+private:
+    IMPLEMENT_REFCOUNTING(ProxyPrefObserver);
+};
+static std::vector<CefRefPtr<CefRegistration>> g_proxyObservers;
+
+static void ObserveProxy(CefRefPtr<CefRequestContext> context) {
+    static CefRefPtr<ProxyPrefObserver> observer = new ProxyPrefObserver();
+    if (!context) return;
+    if (CefRefPtr<CefRegistration> r = context->AddPreferenceObserver("proxy", observer)) g_proxyObservers.push_back(r);
+}
+
 static void ApplyProfilePreferences(CefRefPtr<CefRequestContext> context) {
     ApplyWebsiteAppearance(context);
     ApplyWebRTCPolicy(context);
+    ObserveProxy(context);
     HideDownloadBubble(context);
     ApplyHttpsOnly(context);
     ApplyFingerprintingProtection(context);
@@ -958,6 +1019,36 @@ private:
     IMPLEMENT_REFCOUNTING(FaviconCallback);
 };
 
+// MARK: - Proxy sign-in
+
+/// Settings ▸ Profiles ▸ Proxy's user name and password, from the Keychain: called on Chromium's
+/// IO thread or the UI thread with the profile (nil is Default), the proxy's host and port.
+static NSArray<NSString*>* (^g_proxyCredentialsHandler)(NSString*, NSString*, NSInteger) = nil;
+
+/// A proxy that turns the saved password away asks again at once. After three asks in ten
+/// seconds Cra stops answering, and Chrome's own sign-in dialog asks the person instead.
+static bool AnswerProxySignIn(NSString* profilePath, const CefString& host, int port, CefRefPtr<CefAuthCallback> callback) {
+    NSArray<NSString*>* (^handler)(NSString*, NSString*, NSInteger) = g_proxyCredentialsHandler;
+    if (!handler) return false;
+    NSString* h = NSStringFromCef(host);
+    NSString* key = [NSString stringWithFormat:@"%@|%@:%d", profilePath ?: @"", h, port];
+    static NSMutableDictionary<NSString*, NSMutableArray<NSDate*>*>* asks = [NSMutableDictionary dictionary];
+    @synchronized (asks) {
+        NSMutableArray<NSDate*>* times = asks[key];
+        if (!times) {
+            times = [NSMutableArray array];
+            asks[key] = times;
+        }
+        while (times.count && -times.firstObject.timeIntervalSinceNow >= 10) [times removeObjectAtIndex:0];
+        if (times.count >= 3) return false;
+        [times addObject:[NSDate date]];
+    }
+    NSArray<NSString*>* pair = handler(profilePath, h, port);
+    if (pair.count != 2) return false;
+    callback->Continue(CefStringFromNS(pair[0]), CefStringFromNS(pair[1]));
+    return true;
+}
+
 // MARK: - Browser fetch
 
 typedef void (^CraFetchCompletion)(NSInteger, NSString*, NSString*, NSString*);
@@ -965,8 +1056,8 @@ typedef void (^CraFetchCompletion)(NSInteger, NSString*, NSString*, NSString*);
 /// Collects a CefURLRequest's body. Requests made on the UI thread call back on it.
 class FetchClient : public CefURLRequestClient {
 public:
-    explicit FetchClient(CraFetchCompletion completion, bool restricted = false)
-        : completion_([completion copy]), restricted_(restricted) {}
+    explicit FetchClient(CraFetchCompletion completion, bool restricted = false, NSString* profilePath = nil)
+        : completion_([completion copy]), restricted_(restricted), profile_path_([profilePath copy]) {}
 
     void OnDownloadData(CefRefPtr<CefURLRequest> request, const void* data, size_t length) override {
         if (restricted_ && body_.size() + length > 4 * 1024 * 1024) { request->Cancel(); return; }
@@ -998,12 +1089,15 @@ public:
     void OnUploadProgress(CefRefPtr<CefURLRequest> request, int64_t current, int64_t total) override {}
     void OnDownloadProgress(CefRefPtr<CefURLRequest> request, int64_t current, int64_t total) override {}
     bool GetAuthCredentials(bool isProxy, const CefString& host, int port, const CefString& realm, const CefString& scheme,
-                            CefRefPtr<CefAuthCallback> callback) override { return false; }
+                            CefRefPtr<CefAuthCallback> callback) override {
+        return isProxy && AnswerProxySignIn(profile_path_, host, port, callback);
+    }
 
 private:
     CraFetchCompletion completion_;
     std::string body_;
     bool restricted_;
+    NSString* profile_path_;
     IMPLEMENT_REFCOUNTING(FetchClient);
 };
 
@@ -1620,6 +1714,15 @@ public:
         RunPageScript(frame, "", kLoadingBackgroundProbe);
         SetCommittedLoad(o, YES);
         [o keepAudioMuted];
+        [o applyTimeZoneOverride];
+    }
+
+    // A proxy that asks for a user name and password (407): the ones saved for the profile.
+    bool GetAuthCredentials(CefRefPtr<CefBrowser> browser, const CefString& origin_url, bool isProxy, const CefString& host, int port,
+                            const CefString& realm, const CefString& scheme, CefRefPtr<CefAuthCallback> callback) override {
+        if (!isProxy) return false;
+        CraBrowser* o = owner_;
+        return AnswerProxySignIn(o ? o.profilePath : nil, host, port, callback);
     }
 
     void SetCommittedLoad(CraBrowser* o, BOOL committed) {
@@ -2868,6 +2971,8 @@ static BOOL g_makingSpare = NO;
                       completion:^(NSString*, NSString* error) {
                           if (error) NSLog(@"Cra: document start script not installed: %@", error);
                       }];
+    // Before the first page commits: the override reaches the renderer with the navigation.
+    [self applyTimeZoneOverride];
     if (_sidePanelURL) {
         // DevTools messages run in order, so the document start scripts are in place as well.
         __weak CraBrowser* weakSelf = self;
@@ -2902,6 +3007,21 @@ static BOOL g_makingSpare = NO;
     if (_audioMuted) browser->GetHost()->SetAudioMuted(true);
 }
 
+/// Emulation.setTimezoneOverride on the page's own DevTools session. Blink keeps one override per
+/// renderer process (TimeZoneController), so a second page of the site in the same process is
+/// told "already in effect" while the first holds it, and the process goes back to the Mac's zone
+/// when the first closes: -browserClosed sends it again for the others, and every main-frame load
+/// does too. A page that never had an override opens no session for it.
+- (void)applyTimeZoneOverride {
+    if (!_browser || _isClosed || _isIncognito) return;
+    NSString* zone = g_timeZoneOverrides[TimeZoneOverrideKey(_profilePath)];
+    if (!zone.length && !self.timeZoneOverridden) return;
+    self.timeZoneOverridden = zone.length > 0;
+    NSData* body = [NSJSONSerialization dataWithJSONObject:@{@"timezoneId": zone ?: @""} options:0 error:nil];
+    [self sendDevToolsMethod:@"Emulation.setTimezoneOverride" params:[[NSString alloc] initWithData:body encoding:NSUTF8StringEncoding]
+                  completion:^(NSString*, NSString*) {}];
+}
+
 - (void)keepAudioMuted {
     if (!_audioMuted) return;
     // After the navigation's other observers, SoundContentSettingObserver among them.
@@ -2925,6 +3045,13 @@ static BOOL g_makingSpare = NO;
     self.isClosed = YES;
     self.closedByPage = !self.closeRequested && !g_quitting;
     [g_allBrowsers removeObject:self];
+    if (self.timeZoneOverridden && !g_quitting) {
+        NSString* key = TimeZoneOverrideKey(_profilePath);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            for (CraBrowser* b in [g_allBrowsers allObjects])
+                if ([TimeZoneOverrideKey(b.profilePath) isEqualToString:key]) [b applyTimeZoneOverride];
+        });
+    }
     if (_parked) {
         // Already reported closed when it was parked. Last: this may release self.
         [g_parkedBrowsers removeObject:self];
@@ -3597,6 +3724,28 @@ static void MarkProfileExitedCleanly(NSString* profileDir) {
     }
     if (g_incognitoContext && g_incognitoReady) ApplyFingerprintingProtection(g_incognitoContext);
 }
++ (void)setWebRTCPolicyResolver:(NSString* (^)(NSString*))resolver {
+    g_webRTCPolicyResolver = [resolver copy];
+    RefreshWebRTCPolicyEverywhere();
+}
++ (void)refreshWebRTCPolicy { RefreshWebRTCPolicyEverywhere(); }
++ (void)setProxyChangeHandler:(void (^)(void))handler { g_proxyChangeHandler = [handler copy]; }
++ (void)setProxyCredentialsHandler:(NSArray<NSString*>* (^)(NSString*, NSString*, NSInteger))handler {
+    g_proxyCredentialsHandler = [handler copy];
+}
++ (void)setTimeZoneOverride:(NSString*)timeZone forProfile:(NSString*)profilePath {
+    if (!g_timeZoneOverrides) g_timeZoneOverrides = [NSMutableDictionary dictionary];
+    NSString* key = TimeZoneOverrideKey(profilePath);
+    NSString* zone = timeZone.length ? [timeZone copy] : nil;
+    NSString* current = g_timeZoneOverrides[key];
+    if (current == zone || [current isEqualToString:zone]) return;
+    if (zone) g_timeZoneOverrides[key] = zone; else [g_timeZoneOverrides removeObjectForKey:key];
+    for (CraBrowser* b in [g_allBrowsers allObjects])
+        if ([TimeZoneOverrideKey(b.profilePath) isEqualToString:key]) [b applyTimeZoneOverride];
+}
++ (NSString*)timeZoneOverrideForProfile:(NSString*)profilePath {
+    return g_timeZoneOverrides[TimeZoneOverrideKey(profilePath)];
+}
 + (void)setBlockedDomains:(NSArray<NSString*>*)domains {
     auto* set = new cra_blocker::DomainSet();
     set->reserve(domains.count);
@@ -3888,7 +4037,7 @@ static void MarkProfileExitedCleanly(NSString* profileDir) {
     for (NSString* name in headers) map.insert({CefStringFromNS(name), CefStringFromNS(headers[name])});
     request->SetHeaderMap(map);
     CefRefPtr<CefRequestContext> context = profilePath.length ? ProfileContext(profilePath) : CefRequestContext::GetGlobalContext();
-    CefRefPtr<CefURLRequest> r = CefURLRequest::Create(request, new FetchClient(completion, restricted), context);
+    CefRefPtr<CefURLRequest> r = CefURLRequest::Create(request, new FetchClient(completion, restricted, profilePath), context);
     if (r) FetchClient::InFlight().insert(r); else completion(0, url, @"", @"");
     if (r && restricted) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 20 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
